@@ -65,7 +65,9 @@
           <v-col cols="12" md="4">
             <v-select
               v-model="userFilter"
-              :items="userOptions"
+              :items="usersStore.users"
+              item-title="email"
+              item-value="id"
               label="Użytkownik"
               variant="outlined"
               density="compact"
@@ -208,14 +210,13 @@
                 <v-select
                   v-model="newNotification.user_id"
                   :items="usersStore.users"
-                  item-title="name"
+                  item-title="email"
                   item-value="id"
                   label="Użytkownik"
                   variant="outlined"
                   required
                 ></v-select>
               </v-col>
-              
               <v-col cols="12">
                 <v-text-field
                   v-model="newNotification.payload.title"

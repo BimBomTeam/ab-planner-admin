@@ -26,6 +26,8 @@
             <v-select
               v-model="roleFilter"
               :items="roleOptions"
+              item-title="text"
+              item-value="value"
               label="Filtruj po roli"
               variant="outlined"
               density="compact"

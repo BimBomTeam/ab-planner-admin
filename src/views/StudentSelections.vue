@@ -42,7 +42,9 @@
           <v-col cols="12" md="4">
             <v-select
               v-model="studentFilter"
-              :items="studentOptions"
+              :items="students"
+              item-title="email"
+              item-value="id"
               label="Student"
               variant="outlined"
               density="compact"
@@ -235,7 +237,7 @@
                 <v-select
                   v-model="newSelection.user_id"
                   :items="students"
-                  item-title="name"
+                  item-title="email"
                   item-value="id"
                   label="Student"
                   variant="outlined"
