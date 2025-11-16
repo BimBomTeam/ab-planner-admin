@@ -7,15 +7,16 @@
       width="280"
     >
       <v-list-item
-        prepend-avatar="https://randomuser.me/api/portraits/men/85.jpg"
+        prepend-icon="mdi-school"
         title="Admin Panel"
         subtitle="AB Planner"
+        class="sidebar-header"
       >
       </v-list-item>
 
       <v-divider></v-divider>
 
-      <v-list density="compact" nav>
+      <v-list density="compact" nav class="sidebar">
         <v-list-item
           v-for="item in menuItems"
           :key="item.title"
@@ -123,6 +124,20 @@ export default {
 <style>
 .v-application {
   font-family: 'Roboto', sans-serif !important;
+}
+
+/* Sidebar padding improvements */
+.sidebar-header {
+  padding: 20px 16px !important;
+}
+
+.sidebar .v-list {
+  padding: 8px 12px !important;
+}
+
+.sidebar .v-list-item {
+  margin: 2px 0 !important;
+  padding: 8px 12px !important;
 }
 
 /* Ensure proper mobile behavior */

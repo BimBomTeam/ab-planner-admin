@@ -35,24 +35,46 @@
             ></v-select>
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field
-              v-model="dateFrom"
-              type="date"
-              label="Data od"
-              variant="outlined"
-              density="compact"
-              hide-details
-            ></v-text-field>
+            <v-menu>
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  v-model="dateFromFormatted"
+                  label="Data od"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  prepend-inner-icon="mdi-calendar"
+                  readonly
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="dateFrom"
+                locale="pl"
+                @update:model-value="updateDateFrom"
+              ></v-date-picker>
+            </v-menu>
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field
-              v-model="dateTo"
-              type="date"
-              label="Data do"
-              variant="outlined"
-              density="compact"
-              hide-details
-            ></v-text-field>
+            <v-menu>
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                  v-bind="props"
+                  v-model="dateToFormatted"
+                  label="Data do"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  prepend-inner-icon="mdi-calendar"
+                  readonly
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="dateTo"
+                locale="pl"
+                @update:model-value="updateDateTo"
+              ></v-date-picker>
+            </v-menu>
           </v-col>
         </v-row>
       </v-card-text>
@@ -156,7 +178,7 @@
     <!-- Dialog dodawania/edycji zajęć -->
     <v-dialog v-model="showAddDialog" max-width="800px">
       <v-card>
-        <v-card-title>
+        <v-card-title class="pa-6 pb-4">
           <span class="text-h5">{{ editedLesson.id ? 'Edytuj' : 'Dodaj' }} zajęcia</span>
         </v-card-title>
         
@@ -190,23 +212,71 @@
               </v-col>
               
               <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="editedLesson.starts_at"
-                  type="datetime-local"
-                  label="Początek zajęć"
-                  variant="outlined"
-                  required
-                ></v-text-field>
+                <v-menu>
+                  <template v-slot:activator="{ props }">
+                    <v-text-field
+                      v-bind="props"
+                      :model-value="formatDateTimeDisplay(editedLesson.starts_at)"
+                      label="Początek zajęć"
+                      variant="outlined"
+                      required
+                      prepend-inner-icon="mdi-calendar-clock"
+                      readonly
+                    ></v-text-field>
+                  </template>
+                  <v-card>
+                    <v-card-text>
+                      <v-date-picker
+                        v-model="editedLessonStartDate"
+                        locale="pl"
+                        show-adjacent-months
+                      ></v-date-picker>
+                      <v-time-picker
+                        v-model="editedLessonStartTime"
+                        format="24hr"
+                        class="mt-4"
+                      ></v-time-picker>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn @click="updateStartDateTime">OK</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-menu>
               </v-col>
               
               <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="editedLesson.ends_at"
-                  type="datetime-local"
-                  label="Koniec zajęć"
-                  variant="outlined"
-                  required
-                ></v-text-field>
+                <v-menu>
+                  <template v-slot:activator="{ props }">
+                    <v-text-field
+                      v-bind="props"
+                      :model-value="formatDateTimeDisplay(editedLesson.ends_at)"
+                      label="Koniec zajęć"
+                      variant="outlined"
+                      required
+                      prepend-inner-icon="mdi-calendar-clock"
+                      readonly
+                    ></v-text-field>
+                  </template>
+                  <v-card>
+                    <v-card-text>
+                      <v-date-picker
+                        v-model="editedLessonEndDate"
+                        locale="pl"
+                        show-adjacent-months
+                      ></v-date-picker>
+                      <v-time-picker
+                        v-model="editedLessonEndTime"
+                        format="24hr"
+                        class="mt-4"
+                      ></v-time-picker>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn @click="updateEndDateTime">OK</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-menu>
               </v-col>
               
               <v-col cols="12" md="4">
@@ -271,7 +341,7 @@
     <!-- Dialog potwierdzenia usunięcia -->
     <v-dialog v-model="showDeleteDialog" max-width="400px">
       <v-card>
-        <v-card-title class="text-h5">Potwierdź usunięcie</v-card-title>
+        <v-card-title class="text-h5 pa-6 pb-4">Potwierdź usunięcie</v-card-title>
         <v-card-text>
           Czy na pewno chcesz usunąć zajęcia z przedmiotu {{ lessonToDelete?.subject?.name }}?
         </v-card-text>
@@ -304,12 +374,16 @@ export default {
     return {
       statusFilter: null,
       groupFilter: null,
-      dateFrom: '',
-      dateTo: '',
+      dateFrom: null,
+      dateTo: null,
       showAddDialog: false,
       showDeleteDialog: false,
       editedLesson: {},
       lessonToDelete: null,
+      editedLessonStartDate: null,
+      editedLessonStartTime: null,
+      editedLessonEndDate: null,
+      editedLessonEndTime: null,
       lessonTypes: [
         { title: 'Wykład', value: 'lecture' },
         { title: 'Laboratorium', value: 'lab' },
@@ -330,6 +404,12 @@ export default {
     }
   },
   computed: {
+    dateFromFormatted() {
+      return this.dateFrom ? this.dateFrom.toLocaleDateString('pl-PL') : ''
+    },
+    dateToFormatted() {
+      return this.dateTo ? this.dateTo.toLocaleDateString('pl-PL') : ''
+    },
     filteredLessons() {
       let lessons = this.lessonsStore.lessons
       
@@ -342,13 +422,11 @@ export default {
       }
       
       if (this.dateFrom) {
-        const fromDate = new Date(this.dateFrom)
-        lessons = lessons.filter(lesson => new Date(lesson.starts_at) >= fromDate)
+        lessons = lessons.filter(lesson => new Date(lesson.starts_at) >= this.dateFrom)
       }
       
       if (this.dateTo) {
-        const toDate = new Date(this.dateTo)
-        lessons = lessons.filter(lesson => new Date(lesson.starts_at) <= toDate)
+        lessons = lessons.filter(lesson => new Date(lesson.starts_at) <= this.dateTo)
       }
       
       return lessons
@@ -372,9 +450,9 @@ export default {
       ]
     },
     lecturers() {
-      return this.usersStore.getUsersByRole('lecturer').map(user => ({
+      return this.usersStore.getUsersByRole('teacher').map(user => ({
         id: user.id,
-        name: user.name,
+        name: `${user.first_name} ${user.last_name}`,
         email: user.email
       }))
     },
@@ -389,11 +467,51 @@ export default {
     }
   },
   methods: {
+    updateDateFrom() {
+      // Date picker callback
+    },
+    updateDateTo() {
+      // Date picker callback  
+    },
+    formatDateTimeDisplay(dateTime) {
+      if (!dateTime) return ''
+      const date = new Date(dateTime)
+      return date.toLocaleString('pl-PL', {
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    },
+    updateStartDateTime() {
+      if (this.editedLessonStartDate && this.editedLessonStartTime) {
+        const date = new Date(this.editedLessonStartDate)
+        const [hours, minutes] = this.editedLessonStartTime.split(':')
+        date.setHours(parseInt(hours), parseInt(minutes))
+        this.editedLesson.starts_at = date.toISOString()
+      }
+    },
+    updateEndDateTime() {
+      if (this.editedLessonEndDate && this.editedLessonEndTime) {
+        const date = new Date(this.editedLessonEndDate)
+        const [hours, minutes] = this.editedLessonEndTime.split(':')
+        date.setHours(parseInt(hours), parseInt(minutes))
+        this.editedLesson.ends_at = date.toISOString()
+      }
+    },
     editLesson(lesson) {
-      this.editedLesson = {
-        ...lesson,
-        starts_at: this.formatDateTimeLocal(lesson.starts_at),
-        ends_at: this.formatDateTimeLocal(lesson.ends_at)
+      this.editedLesson = { ...lesson }
+      // Setup date/time pickers
+      if (lesson.starts_at) {
+        const startDate = new Date(lesson.starts_at)
+        this.editedLessonStartDate = startDate
+        this.editedLessonStartTime = startDate.toTimeString().slice(0, 5)
+      }
+      if (lesson.ends_at) {
+        const endDate = new Date(lesson.ends_at)
+        this.editedLessonEndDate = endDate
+        this.editedLessonEndTime = endDate.toTimeString().slice(0, 5)
       }
       this.showAddDialog = true
     },
@@ -412,12 +530,8 @@ export default {
     },
     
     saveLesson() {
-      // Konwersja datetime-local na ISO string
-      const lessonData = {
-        ...this.editedLesson,
-        starts_at: new Date(this.editedLesson.starts_at).toISOString(),
-        ends_at: new Date(this.editedLesson.ends_at).toISOString()
-      }
+      // Use the already converted ISO strings
+      const lessonData = { ...this.editedLesson }
       
       if (this.editedLesson.id) {
         this.lessonsStore.updateLesson(this.editedLesson.id, lessonData)
@@ -430,6 +544,10 @@ export default {
     closeDialog() {
       this.showAddDialog = false
       this.editedLesson = {}
+      this.editedLessonStartDate = null
+      this.editedLessonStartTime = null
+      this.editedLessonEndDate = null
+      this.editedLessonEndTime = null
     },
     
     formatDate(dateString) {

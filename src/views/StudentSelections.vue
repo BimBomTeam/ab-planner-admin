@@ -152,15 +152,16 @@
     <!-- Sekcja analizy grup -->
     <div class="mt-8">
       <h2 class="text-h5 mb-6">Analiza grup</h2>
-      <v-row>
+      <v-row class="align-stretch">
         <v-col
           v-for="group in groupsWithSelections"
           :key="group.id"
           cols="12"
           md="6"
           lg="4"
+          class="d-flex"
         >
-          <v-card>
+          <v-card class="w-100 d-flex flex-column">
             <v-card-title class="d-flex justify-space-between align-center">
               <span>{{ group.code }}</span>
               <v-chip
@@ -172,7 +173,7 @@
               </v-chip>
             </v-card-title>
             
-            <v-card-text>
+            <v-card-text class="flex-grow-1 d-flex flex-column">
               <div class="mb-2">
                 <strong>Program:</strong> {{ group.program.name }}
               </div>
@@ -185,7 +186,7 @@
               
               <v-divider class="my-3"></v-divider>
               
-              <div class="d-flex justify-space-between align-center">
+              <div class="d-flex justify-space-between align-center mb-2">
                 <span class="text-h6">Studenci:</span>
                 <v-chip
                   color="info"
@@ -196,24 +197,25 @@
                 </v-chip>
               </div>
               
-              <div class="mt-2">
-                <v-list density="compact" v-if="group.students.length > 0">
+              <div class="flex-grow-1 d-flex flex-column justify-start" style="min-height: 120px;">
+                <v-list density="compact" v-if="group.students.length > 0" class="pa-0">
                   <v-list-item
                     v-for="student in group.students.slice(0, 3)"
                     :key="student.id"
                     density="compact"
+                    class="px-0"
                   >
                     <v-list-item-title class="text-caption">
                       {{ student.name }}
                     </v-list-item-title>
                   </v-list-item>
-                  <v-list-item v-if="group.students.length > 3" density="compact">
+                  <v-list-item v-if="group.students.length > 3" density="compact" class="px-0">
                     <v-list-item-title class="text-caption text-grey">
                       ... i {{ group.students.length - 3 }} więcej
                     </v-list-item-title>
                   </v-list-item>
                 </v-list>
-                <div v-else class="text-caption text-grey">
+                <div v-else class="text-caption text-grey pa-2">
                   Brak studentów
                 </div>
               </div>
@@ -226,7 +228,7 @@
     <!-- Dialog dodawania wyboru -->
     <v-dialog v-model="showAddDialog" max-width="600px">
       <v-card>
-        <v-card-title>
+        <v-card-title class="pa-6 pb-4">
           <span class="text-h5">Dodaj wybór studenta</span>
         </v-card-title>
         
@@ -271,7 +273,7 @@
     <!-- Dialog potwierdzenia usunięcia -->
     <v-dialog v-model="showDeleteDialog" max-width="400px">
       <v-card>
-        <v-card-title class="text-h5">Potwierdź usunięcie</v-card-title>
+        <v-card-title class="text-h5 pa-6 pb-4">Potwierdź usunięcie</v-card-title>
         <v-card-text>
           Czy na pewno chcesz usunąć wybór studenta?
         </v-card-text>

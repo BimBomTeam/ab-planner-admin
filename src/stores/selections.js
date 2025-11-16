@@ -7,25 +7,25 @@ export const useSelectionsStore = defineStore('selections', {
         id: 1,
         user_id: 3,
         group_id: 1,
-        selected_at: '2024-11-10T10:00:00Z'
+        selected_at: '2025-11-10T10:00:00Z'
       },
       {
         id: 2,
         user_id: 3,
         group_id: 2,
-        selected_at: '2024-11-10T10:05:00Z'
+        selected_at: '2025-11-10T10:05:00Z'
       },
       {
         id: 3,
         user_id: 4,
         group_id: 1,
-        selected_at: '2024-11-11T14:30:00Z'
+        selected_at: '2025-11-11T14:30:00Z'
       },
       {
         id: 4,
         user_id: 4,
         group_id: 3,
-        selected_at: '2024-11-12T09:15:00Z'
+        selected_at: '2025-11-12T09:15:00Z'
       }
     ]
   }),

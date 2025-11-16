@@ -199,7 +199,7 @@
     <!-- Dialog dodawania powiadomienia -->
     <v-dialog v-model="showAddDialog" max-width="600px">
       <v-card>
-        <v-card-title>
+        <v-card-title class="pa-6 pb-4">
           <span class="text-h5">Dodaj powiadomienie</span>
         </v-card-title>
         
@@ -260,7 +260,7 @@
     <!-- Dialog potwierdzenia usunięcia -->
     <v-dialog v-model="showDeleteDialog" max-width="400px">
       <v-card>
-        <v-card-title class="text-h5">Potwierdź usunięcie</v-card-title>
+        <v-card-title class="text-h5 pa-6 pb-4">Potwierdź usunięcie</v-card-title>
         <v-card-text>
           Czy na pewno chcesz usunąć powiadomienie "{{ notificationToDelete?.payload?.title }}"?
         </v-card-text>

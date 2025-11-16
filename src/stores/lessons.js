@@ -5,8 +5,8 @@ export const useLessonsStore = defineStore('lessons', {
     lessons: [
       {
         id: 1,
-        starts_at: '2024-11-18T08:00:00Z',
-        ends_at: '2024-11-18T09:30:00Z',
+        starts_at: '2025-11-18T08:00:00Z',
+        ends_at: '2025-11-18T09:30:00Z',
         status: 'scheduled',
         lesson_type: 'lecture',
         subject: { id: 1, name: 'Programowanie obiektowe', code: 'PO' },
@@ -16,8 +16,8 @@ export const useLessonsStore = defineStore('lessons', {
       },
       {
         id: 2,
-        starts_at: '2024-11-18T10:00:00Z',
-        ends_at: '2024-11-18T11:30:00Z',
+        starts_at: '2025-11-18T10:00:00Z',
+        ends_at: '2025-11-18T11:30:00Z',
         status: 'scheduled',
         lesson_type: 'lab',
         subject: { id: 2, name: 'Bazy danych', code: 'BD' },
@@ -27,8 +27,8 @@ export const useLessonsStore = defineStore('lessons', {
       },
       {
         id: 3,
-        starts_at: '2024-11-19T12:00:00Z',
-        ends_at: '2024-11-19T13:30:00Z',
+        starts_at: '2025-11-19T12:00:00Z',
+        ends_at: '2025-11-19T13:30:00Z',
         status: 'rescheduled',
         lesson_type: 'lecture',
         subject: { id: 4, name: 'Analiza matematyczna', code: 'AM' },

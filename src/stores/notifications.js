@@ -13,8 +13,8 @@ export const useNotificationsStore = defineStore('notifications', {
         },
         status: 'sent',
         attempts: 1,
-        created_at: '2024-11-16T08:00:00Z',
-        sent_at: '2024-11-16T08:01:00Z'
+        created_at: '2025-11-16T08:00:00Z',
+        sent_at: '2025-11-16T08:01:00Z'
       },
       {
         id: 2,
@@ -26,7 +26,7 @@ export const useNotificationsStore = defineStore('notifications', {
         },
         status: 'pending',
         attempts: 0,
-        created_at: '2024-11-16T09:30:00Z',
+        created_at: '2025-11-16T09:30:00Z',
         sent_at: null
       },
       {
@@ -39,7 +39,7 @@ export const useNotificationsStore = defineStore('notifications', {
         },
         status: 'failed',
         attempts: 3,
-        created_at: '2024-11-16T09:00:00Z',
+        created_at: '2025-11-16T09:00:00Z',
         sent_at: null
       }
     ],

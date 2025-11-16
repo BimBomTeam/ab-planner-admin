@@ -98,7 +98,7 @@
     <!-- Dialog dodawania/edycji programu -->
     <v-dialog v-model="showAddDialog" max-width="600px">
       <v-card>
-        <v-card-title>
+        <v-card-title class="pa-6 pb-4">
           <span class="text-h5">{{ editedProgram.id ? 'Edytuj' : 'Dodaj' }} program</span>
         </v-card-title>
         
@@ -110,13 +110,13 @@
                   v-model="editedProgram.name"
                   label="Nazwa programu"
                   variant="outlined"
+                  density="compact"
                   required
                 ></v-text-field>
               </v-col>
               
               <!-- Zarządzanie latami studiów -->
               <v-col cols="12">
-                <h4 class="mb-3">Lata studiów</h4>
                 <div class="mb-3">
                   <v-chip
                     v-for="year in editedProgram.years"
@@ -128,29 +128,28 @@
                     Rok {{ year.year }}
                   </v-chip>
                 </div>
-                <div class="d-flex gap-2">
-                  <v-select
-                    v-model="newYear"
-                    :items="availableYears"
-                    label="Dodaj rok studiów"
-                    variant="outlined"
-                    density="compact"
-                    style="width: 200px;"
-                  ></v-select>
-                  <v-btn
-                    @click="addYear"
-                    :disabled="!newYear"
-                    color="primary"
-                    variant="outlined"
-                  >
-                    Dodaj
-                  </v-btn>
-                </div>
+                <v-select
+                  v-model="newYear"
+                  :items="availableYears"
+                  label="Dodaj rok studiów"
+                  variant="outlined"
+                  density="compact"
+                  class="mb-2"
+                ></v-select>
+                <v-btn
+                  @click="addYear"
+                  :disabled="!newYear"
+                  color="primary"
+                  variant="flat"
+                  block
+                >
+                  <v-icon size="16" class="mr-1">mdi-plus</v-icon>
+                  Dodaj rok studiów
+                </v-btn>
               </v-col>
               
               <!-- Zarządzanie specjalizacjami -->
               <v-col cols="12">
-                <h4 class="mb-3">Specjalizacje</h4>
                 <div class="mb-3">
                   <v-chip
                     v-for="spec in editedProgram.specializations"
@@ -162,23 +161,24 @@
                     {{ spec.name }}
                   </v-chip>
                 </div>
-                <div class="d-flex gap-2">
-                  <v-text-field
-                    v-model="newSpecialization"
-                    label="Nazwa specjalizacji"
-                    variant="outlined"
-                    density="compact"
-                    @keyup.enter="addSpecialization"
-                  ></v-text-field>
-                  <v-btn
-                    @click="addSpecialization"
-                    :disabled="!newSpecialization"
-                    color="success"
-                    variant="outlined"
-                  >
-                    Dodaj
-                  </v-btn>
-                </div>
+                <v-text-field
+                  v-model="newSpecialization"
+                  label="Nazwa specjalizacji"
+                  variant="outlined"
+                  density="compact"
+                  class="mb-2"
+                  @keyup.enter="addSpecialization"
+                ></v-text-field>
+                <v-btn
+                  @click="addSpecialization"
+                  :disabled="!newSpecialization"
+                  color="success"
+                  variant="flat"
+                  block
+                >
+                  <v-icon size="16" class="mr-1">mdi-plus</v-icon>
+                  Dodaj specjalizację
+                </v-btn>
               </v-col>
             </v-row>
           </v-container>
@@ -195,7 +195,7 @@
     <!-- Dialog potwierdzenia usunięcia -->
     <v-dialog v-model="showDeleteDialog" max-width="400px">
       <v-card>
-        <v-card-title class="text-h5">Potwierdź usunięcie</v-card-title>
+        <v-card-title class="text-h5 pa-6 pb-4">Potwierdź usunięcie</v-card-title>
         <v-card-text>
           Czy na pewno chcesz usunąć program {{ programToDelete?.name }}?
         </v-card-text>
@@ -239,7 +239,7 @@
     <!-- Dialog dodawania przedmiotu -->
     <v-dialog v-model="showSubjectDialog" max-width="500px">
       <v-card>
-        <v-card-title>
+        <v-card-title class="pa-6 pb-4">
           <span class="text-h5">Dodaj przedmiot</span>
         </v-card-title>
         

@@ -66,6 +66,22 @@ export const useUsersStore = defineStore('users', {
         year: null,
         specialization: null,
         phone: '000-000-000'
+      },
+      {
+        id: 5,
+        username: 'dr.kowal',
+        email: 'dr.kowal@edu.pl',
+        first_name: 'Dr Jan',
+        last_name: 'Kowal',
+        role: 'teacher',
+        active: true,
+        is_student: false,
+        is_teacher: true,
+        is_admin: false,
+        program_id: null,
+        year: null,
+        specialization: null,
+        phone: '111-222-333'
       }
     ]
   }),
