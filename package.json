@@ -3,13 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "serve": "vue-cli-service serve --skip-plugins @vue/cli-plugin-eslint",
+    "build": "vue-cli-service build --skip-plugins @vue/cli-plugin-eslint",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "@vueuse/core": "^14.0.0",
     "core-js": "^3.8.3",
-    "vue": "^3.2.13"
+    "pinia": "^3.0.4",
+    "vue": "^3.2.13",
+    "vue-router": "^4.6.3",
+    "vuetify": "^3.10.11"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
@@ -32,7 +37,11 @@
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
-    "rules": {}
+    "rules": {
+      "vue/multi-word-component-names": "off",
+      "vue/valid-v-slot": "off",
+      "no-unused-vars": "warn"
+    }
   },
   "browserslist": [
     "> 1%",
