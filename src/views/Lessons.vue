@@ -2,7 +2,7 @@
   <div>
     <div class="d-flex justify-space-between align-center mb-6">
       <h1 class="text-h4">Zajęcia</h1>
-      <v-btn color="primary" @click="showAddDialog = true">
+      <v-btn color="primary" @click="initNewLesson()">
         <v-icon class="mr-2">mdi-plus</v-icon>
         Dodaj zajęcia
       </v-btn>
@@ -488,18 +488,49 @@ export default {
       if (this.editedLessonStartDate && this.editedLessonStartTime) {
         const date = new Date(this.editedLessonStartDate)
         const [hours, minutes] = this.editedLessonStartTime.split(':')
-        date.setHours(parseInt(hours), parseInt(minutes))
+        date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
         this.editedLesson.starts_at = date.toISOString()
+        
+        if (!this.editedLesson.ends_at) {
+          const endDate = new Date(date)
+          endDate.setMinutes(endDate.getMinutes() + 90)
+          this.editedLesson.ends_at = endDate.toISOString()
+          this.editedLessonEndDate = endDate
+          this.editedLessonEndTime = endDate.toTimeString().slice(0, 5)
+        }
       }
     },
     updateEndDateTime() {
       if (this.editedLessonEndDate && this.editedLessonEndTime) {
         const date = new Date(this.editedLessonEndDate)
         const [hours, minutes] = this.editedLessonEndTime.split(':')
-        date.setHours(parseInt(hours), parseInt(minutes))
+        date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
         this.editedLesson.ends_at = date.toISOString()
       }
     },
+    initNewLesson() {
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      tomorrow.setHours(8, 0, 0, 0)
+      
+      const endTime = new Date(tomorrow)
+      endTime.setHours(9, 30, 0, 0)
+      
+      this.editedLesson = {
+        starts_at: tomorrow.toISOString(),
+        ends_at: endTime.toISOString(),
+        status: 'scheduled',
+        lesson_type: 'lecture'
+      }
+      
+      this.editedLessonStartDate = tomorrow
+      this.editedLessonStartTime = '08:00'
+      this.editedLessonEndDate = endTime
+      this.editedLessonEndTime = '09:30'
+      
+      this.showAddDialog = true
+    },
+    
     editLesson(lesson) {
       this.editedLesson = { ...lesson }
       // Setup date/time pickers
