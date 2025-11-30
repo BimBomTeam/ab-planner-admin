@@ -1,154 +1,248 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+
+const API_BASE_URL = '/api/v1'
+
+// PKCE helpers
+function generateRandomString(length) {
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
+    let text = ''
+    for (let i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length))
+    }
+    return text
+}
+
+async function sha256(plain) {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(plain)
+    return window.crypto.subtle.digest('SHA-256', data)
+}
+
+function base64urlencode(buffer) {
+    const bytes = new Uint8Array(buffer)
+    let str = ''
+    for (let i = 0; i < bytes.byteLength; i++) {
+        str += String.fromCharCode(bytes[i])
+    }
+    return btoa(str)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+}
+
+async function generateCodeChallenge(codeVerifier) {
+    const hashed = await sha256(codeVerifier)
+    return base64urlencode(hashed)
+}
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: null,
         isAuthenticated: false,
-        token: null,
-        // Mock users database
-        mockUsers: [
-            {
-                id: 1,
-                email: 'admin@abplanner.pl',
-                password: 'admin123',
-                name: 'Admin',
-                role: 'admin'
-            },
-            {
-                id: 2,
-                email: 'user@abplanner.pl',
-                password: 'user123',
-                name: 'Jan Kowalski',
-                role: 'user'
-            }
-        ]
+        accessToken: null,
+        refreshToken: null,
+        codeVerifier: null,
+        codeChallenge: null
     }),
 
     getters: {
         currentUser: (state) => state.user,
         isLoggedIn: (state) => state.isAuthenticated,
-        userRole: (state) => state.user?.role || null
+        userRole: (state) => state.user?.role?.code || null
     },
 
     actions: {
-        // Mock login
-        async login(email, password) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    const user = this.mockUsers.find(
-                        u => u.email === email && u.password === password
-                    )
+        // Initialize PKCE flow
+        async initPKCE() {
+            this.codeVerifier = generateRandomString(128)
+            this.codeChallenge = await generateCodeChallenge(this.codeVerifier)
 
-                    if (user) {
-                        this.user = {
-                            id: user.id,
-                            email: user.email,
-                            name: user.name,
-                            role: user.role
-                        }
-                        this.isAuthenticated = true
-                        this.token = 'mock-jwt-token-' + Date.now()
+            // Store code verifier in sessionStorage for callback
+            sessionStorage.setItem('pkce_code_verifier', this.codeVerifier)
 
-                        // Save to localStorage
-                        localStorage.setItem('auth_token', this.token)
-                        localStorage.setItem('auth_user', JSON.stringify(this.user))
-
-                        resolve({ success: true, user: this.user })
-                    } else {
-                        reject({ success: false, message: 'Nieprawidłowy email lub hasło' })
-                    }
-                }, 800) // Simulate API delay
-            })
+            return this.codeChallenge
         },
 
-        // Mock register
-        async register(userData) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // Check if email already exists
-                    const existingUser = this.mockUsers.find(u => u.email === userData.email)
+        // Get Microsoft login URL
+        async getMicrosoftLoginUrl() {
+            try {
+                const codeChallenge = await this.initPKCE()
+                const redirectUri = `${window.location.origin}/auth/callback`
 
-                    if (existingUser) {
-                        reject({ success: false, message: 'Użytkownik z tym adresem email już istnieje' })
-                        return
+                const response = await axios.get(`${API_BASE_URL}/auth/microsoft/login-url`, {
+                    params: {
+                        code_challenge: codeChallenge,
+                        state: 'random_state_' + Date.now()
                     }
+                })
 
-                    // Create new user
-                    const newUser = {
-                        id: this.mockUsers.length + 1,
-                        email: userData.email,
-                        password: userData.password,
-                        name: userData.name,
-                        role: 'user'
-                    }
-
-                    this.mockUsers.push(newUser)
-
-                    // Auto login after registration
-                    this.user = {
-                        id: newUser.id,
-                        email: newUser.email,
-                        name: newUser.name,
-                        role: newUser.role
-                    }
-                    this.isAuthenticated = true
-                    this.token = 'mock-jwt-token-' + Date.now()
-
-                    // Save to localStorage
-                    localStorage.setItem('auth_token', this.token)
-                    localStorage.setItem('auth_user', JSON.stringify(this.user))
-
-                    resolve({ success: true, user: this.user })
-                }, 800)
-            })
+                return response.data.authorization_url
+            } catch (error) {
+                console.error('Error getting Microsoft login URL:', error)
+                throw new Error('Nie udało się uzyskać adresu URL logowania Microsoft')
+            }
         },
 
-        // Mock reset password
-        async resetPassword(email) {
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    const user = this.mockUsers.find(u => u.email === email)
+        // Handle Microsoft callback
+        async handleMicrosoftCallback(code) {
+            try {
+                const codeVerifier = sessionStorage.getItem('pkce_code_verifier')
+                if (!codeVerifier) {
+                    throw new Error('Brak code verifier - sesja wygasła')
+                }
 
-                    if (user) {
-                        // In real app, this would send an email
-                        resolve({
-                            success: true,
-                            message: 'Link do resetowania hasła został wysłany na podany adres email'
-                        })
-                    } else {
-                        reject({
-                            success: false,
-                            message: 'Nie znaleziono użytkownika z podanym adresem email'
-                        })
-                    }
-                }, 800)
-            })
+                const redirectUri = `${window.location.origin}/auth/callback`
+
+                const response = await axios.post(`${API_BASE_URL}/auth/microsoft/token`, {
+                    code,
+                    code_verifier: codeVerifier,
+                    redirect_uri: redirectUri
+                })
+
+                const { access_token, refresh_token, user } = response.data
+
+                this.accessToken = access_token
+                this.refreshToken = refresh_token
+                this.user = user
+                this.isAuthenticated = true
+
+                // Save to localStorage
+                localStorage.setItem('access_token', access_token)
+                localStorage.setItem('refresh_token', refresh_token)
+                localStorage.setItem('user', JSON.stringify(user))
+
+                // Clear PKCE data
+                sessionStorage.removeItem('pkce_code_verifier')
+
+                return { success: true, user }
+            } catch (error) {
+                console.error('Microsoft login error:', error)
+                throw new Error(error.response?.data?.detail || 'Błąd podczas logowania przez Microsoft')
+            }
+        },
+
+        // Refresh access token
+        async refreshAccessToken() {
+            try {
+                if (!this.refreshToken) {
+                    throw new Error('Brak refresh token')
+                }
+
+                const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+                    refresh_token: this.refreshToken
+                })
+
+                const { access_token, refresh_token } = response.data
+
+                this.accessToken = access_token
+                this.refreshToken = refresh_token
+
+                localStorage.setItem('access_token', access_token)
+                localStorage.setItem('refresh_token', refresh_token)
+
+                return true
+            } catch (error) {
+                console.error('Token refresh error:', error)
+                this.logout()
+                return false
+            }
         },
 
         // Logout
-        logout() {
-            this.user = null
-            this.isAuthenticated = false
-            this.token = null
+        async logout() {
+            try {
+                if (this.refreshToken) {
+                    await axios.post(
+                        `${API_BASE_URL}/auth/logout`,
+                        { refresh_token: this.refreshToken },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${this.accessToken}`
+                            }
+                        }
+                    )
+                }
+            } catch (error) {
+                console.error('Logout error:', error)
+            } finally {
+                // Clear state
+                this.user = null
+                this.isAuthenticated = false
+                this.accessToken = null
+                this.refreshToken = null
 
-            // Clear localStorage
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('auth_user')
+                // Clear storage
+                localStorage.removeItem('access_token')
+                localStorage.removeItem('refresh_token')
+                localStorage.removeItem('user')
+                sessionStorage.removeItem('pkce_code_verifier')
+            }
         },
 
         // Check if user is logged in (from localStorage)
         checkAuth() {
-            const token = localStorage.getItem('auth_token')
-            const user = localStorage.getItem('auth_user')
+            const accessToken = localStorage.getItem('access_token')
+            const refreshToken = localStorage.getItem('refresh_token')
+            const user = localStorage.getItem('user')
 
-            if (token && user) {
-                this.token = token
+            if (accessToken && refreshToken && user) {
+                this.accessToken = accessToken
+                this.refreshToken = refreshToken
                 this.user = JSON.parse(user)
                 this.isAuthenticated = true
                 return true
             }
 
             return false
+        },
+
+        // Get current user from API
+        async getCurrentUser() {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/users/me`, {
+                    headers: {
+                        Authorization: `Bearer ${this.accessToken}`
+                    }
+                })
+
+                this.user = response.data
+                localStorage.setItem('user', JSON.stringify(response.data))
+
+                return response.data
+            } catch (error) {
+                console.error('Get current user error:', error)
+                if (error.response?.status === 401) {
+                    // Try to refresh token
+                    const refreshed = await this.refreshAccessToken()
+                    if (refreshed) {
+                        return this.getCurrentUser()
+                    }
+                }
+                throw error
+            }
         }
     }
 })
+
+// Axios interceptor for automatic token refresh
+axios.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true
+
+            const authStore = useAuthStore()
+            const refreshed = await authStore.refreshAccessToken()
+
+            if (refreshed) {
+                originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`
+                return axios(originalRequest)
+            }
+        }
+
+        return Promise.reject(error)
+    }
+)

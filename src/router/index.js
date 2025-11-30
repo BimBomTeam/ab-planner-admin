@@ -8,8 +8,7 @@ import Lessons from '@/views/Lessons.vue'
 import Notifications from '@/views/Notifications.vue'
 import StudentSelections from '@/views/StudentSelections.vue'
 import Login from '@/views/Login.vue'
-import Register from '@/views/Register.vue'
-import ResetPassword from '@/views/ResetPassword.vue'
+import AuthCallback from '@/views/AuthCallback.vue'
 
 const routes = [
   {
@@ -19,15 +18,9 @@ const routes = [
     meta: { requiresGuest: true }
   },
   {
-    path: '/register',
-    name: 'Register',
-    component: Register,
-    meta: { requiresGuest: true }
-  },
-  {
-    path: '/reset-password',
-    name: 'ResetPassword',
-    component: ResetPassword,
+    path: '/auth/callback',
+    name: 'AuthCallback',
+    component: AuthCallback,
     meta: { requiresGuest: true }
   },
   {
@@ -97,8 +90,9 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth && !isAuthenticated) {
     // Redirect to login if trying to access protected route
     next('/login')
-  } else if (requiresGuest && isAuthenticated) {
+  } else if (requiresGuest && isAuthenticated && to.name !== 'AuthCallback') {
     // Redirect to dashboard if trying to access guest-only route while logged in
+    // Exception: allow AuthCallback even when authenticated (for the callback flow)
     next('/dashboard')
   } else {
     next()

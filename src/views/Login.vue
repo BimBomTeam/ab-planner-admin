@@ -1,18 +1,20 @@
 <template>
   <v-container fluid class="fill-height auth-container pa-0">
     <v-row align="center" justify="center" class="fill-height ma-0">
-      <v-col cols="12" sm="8" md="5" lg="4">
+      <v-col cols="12" sm="10" md="6" lg="5" xl="4" class="pa-4">
         <v-card class="elevation-12 auth-card">
           <!-- Header -->
-          <v-card-title class="text-center bg-primary text-white pa-6">
+          <v-card-title class="text-center bg-primary text-white pa-6 pa-sm-8">
             <div class="w-100">
-              <v-icon size="48" class="mb-2">mdi-school</v-icon>
-              <h2 class="text-h5 font-weight-bold">AB Planner Admin</h2>
-              <p class="text-subtitle-2 mt-2 mb-0">Zaloguj się do panelu administracyjnego</p>
+              <v-icon size="48" class="mb-3">mdi-school</v-icon>
+              <h2 class="text-h5 text-sm-h4 font-weight-bold">AB Planner Admin</h2>
+              <p class="text-subtitle-2 text-sm-subtitle-1 mt-2 mb-0">
+                Zaloguj się do panelu administracyjnego
+              </p>
             </div>
           </v-card-title>
 
-          <v-card-text class="pa-8">
+          <v-card-text class="pa-6 pa-sm-8 pa-md-10">
             <!-- Alert messages -->
             <v-alert
               v-if="error"
@@ -25,91 +27,25 @@
               {{ error }}
             </v-alert>
 
-            <v-alert
-              v-if="successMessage"
-              type="success"
-              variant="tonal"
-              class="mb-4"
-              closable
-              @click:close="successMessage = null"
-            >
-              {{ successMessage }}
-            </v-alert>
-
-            <!-- Login Form -->
-            <v-form ref="form" v-model="valid" @submit.prevent="handleLogin">
-              <v-text-field
-                v-model="email"
-                :rules="emailRules"
-                label="Email"
-                prepend-inner-icon="mdi-email"
-                type="email"
-                variant="outlined"
-                class="mb-3"
-                required
-                :disabled="loading"
-              ></v-text-field>
-
-              <v-text-field
-                v-model="password"
-                :rules="passwordRules"
-                label="Hasło"
-                prepend-inner-icon="mdi-lock"
-                :type="showPassword ? 'text' : 'password'"
-                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                @click:append-inner="showPassword = !showPassword"
-                variant="outlined"
-                class="mb-2"
-                required
-                :disabled="loading"
-              ></v-text-field>
-
-              <div class="d-flex justify-space-between align-center mb-4">
-                <v-checkbox
-                  v-model="rememberMe"
-                  label="Zapamiętaj mnie"
-                  density="compact"
-                  hide-details
-                  :disabled="loading"
-                ></v-checkbox>
-
-                <v-btn
-                  variant="text"
-                  color="primary"
-                  size="small"
-                  to="/reset-password"
-                  :disabled="loading"
-                >
-                  Zapomniałeś hasła?
-                </v-btn>
-              </div>
-
+            <!-- Microsoft Login Button -->
+            <div class="text-center">
               <v-btn
-                type="submit"
                 color="primary"
-                size="large"
+                size="x-large"
                 block
                 :loading="loading"
-                :disabled="!valid || loading"
-                class="mb-4"
+                @click="handleMicrosoftLogin"
+                prepend-icon="mdi-microsoft"
+                class="mb-4 text-none"
+                style="min-height: 56px;"
               >
-                Zaloguj się
+                <span class="text-body-1 text-sm-h6">Zaloguj się przez Microsoft</span>
               </v-btn>
 
-              <div class="text-center">
-                <p class="text-body-2 mb-4">Nie masz konta?</p>
-                <v-btn
-                  variant="outlined"
-                  color="primary"
-                  size="large"  
-                  block
-                  to="/register"
-                  :disabled="loading"
-                >
-                  Zarejestruj się
-                </v-btn>
-              </div>
-            </v-form>
+              <p class="text-caption text-sm-body-2 text-grey mt-4 px-2">
+                Użyj swojego konta Microsoft do zalogowania się do systemu AB Planner
+              </p>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -128,50 +64,22 @@ export default {
   },
   data() {
     return {
-      valid: false,
       loading: false,
-      email: '',
-      password: '',
-      showPassword: false,
-      rememberMe: false,
-      error: null,
-      successMessage: null,
-      emailRules: [
-        v => !!v || 'Email jest wymagany',
-        v => /.+@.+\..+/.test(v) || 'Email musi być poprawny'
-      ],
-      passwordRules: [
-        v => !!v || 'Hasło jest wymagane',
-        v => v.length >= 6 || 'Hasło musi mieć co najmniej 6 znaków'
-      ]
-    }
-  },
-  mounted() {
-    // Check for success message from registration
-    if (this.$route.query.registered) {
-      this.successMessage = 'Rejestracja zakończona pomyślnie! Możesz się teraz zalogować.'
-    }
-    if (this.$route.query.reset) {
-      this.successMessage = 'Link do resetowania hasła został wysłany na Twój email.'
+      error: null
     }
   },
   methods: {
-    async handleLogin() {
-      const { valid } = await this.$refs.form.validate()
-      
-      if (!valid) return
-
+    async handleMicrosoftLogin() {
       this.loading = true
       this.error = null
 
       try {
-        await this.authStore.login(this.email, this.password)
+        const loginUrl = await this.authStore.getMicrosoftLoginUrl()
         
-        // Redirect to dashboard
-        this.$router.push('/dashboard')
+        // Redirect to Microsoft login
+        window.location.href = loginUrl
       } catch (err) {
         this.error = err.message || 'Wystąpił błąd podczas logowania'
-      } finally {
         this.loading = false
       }
     }
@@ -188,9 +96,31 @@ export default {
 .auth-card {
   border-radius: 16px !important;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .w-100 {
   width: 100%;
+}
+
+/* Mobile optimizations */
+@media (max-width: 599px) {
+  .auth-card {
+    border-radius: 12px !important;
+  }
+}
+
+/* Tablet and up */
+@media (min-width: 600px) {
+  .auth-card {
+    min-width: 450px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 960px) {
+  .auth-card {
+    min-width: 500px;
+  }
 }
 </style>
