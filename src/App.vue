@@ -1,6 +1,8 @@
 <template>
   <v-app>
+    <!-- Navigation Drawer - only show when authenticated -->
     <v-navigation-drawer
+      v-if="authStore.isAuthenticated"
       v-model="drawerModel"
       :temporary="$vuetify.display.mobile"
       :permanent="!$vuetify.display.mobile"
@@ -26,30 +28,79 @@
           :value="item.value"
         ></v-list-item>
       </v-list>
+
+      <template v-slot:append>
+        <div class="pa-4">
+          <v-btn
+            block
+            color="error"
+            variant="outlined"
+            prepend-icon="mdi-logout"
+            @click="handleLogout"
+          >
+            Wyloguj
+          </v-btn>
+        </div>
+      </template>
     </v-navigation-drawer>
 
-    <v-app-bar>
+    <!-- App Bar - only show when authenticated -->
+    <v-app-bar v-if="authStore.isAuthenticated">
       <v-app-bar-nav-icon 
         v-if="$vuetify.display.mobile"
         @click="drawer = !drawer"
       ></v-app-bar-nav-icon>
       <v-toolbar-title>AB Planner Admin</v-toolbar-title>
       <v-spacer></v-spacer>
+      
+      <!-- User info -->
+      <v-menu>
+        <template v-slot:activator="{ props }">
+          <v-btn
+            v-bind="props"
+            variant="text"
+            prepend-icon="mdi-account-circle"
+          >
+            {{ authStore.user?.name || 'User' }}
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-list-item-title class="text-caption text-grey">
+              {{ authStore.user?.email }}
+            </v-list-item-title>
+          </v-list-item>
+          <v-divider></v-divider>
+          <v-list-item @click="handleLogout">
+            <template v-slot:prepend>
+              <v-icon>mdi-logout</v-icon>
+            </template>
+            <v-list-item-title>Wyloguj</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      
       <v-btn icon="mdi-bell" variant="text"></v-btn>
-      <v-btn icon="mdi-account" variant="text"></v-btn>
     </v-app-bar>
 
-    <v-main>
-      <v-container fluid>
+    <v-main :class="{ 'pa-0': !authStore.isAuthenticated }">
+      <v-container v-if="authStore.isAuthenticated" fluid>
         <router-view />
       </v-container>
+      <router-view v-else />
     </v-main>
   </v-app>
 </template>
 
 <script>
+import { useAuthStore } from '@/stores/auth'
+
 export default {
   name: 'App',
+  setup() {
+    const authStore = useAuthStore()
+    return { authStore }
+  },
   data() {
     return {
       drawer: true,
@@ -116,6 +167,16 @@ export default {
     // Auto-close drawer on mobile initially
     if (this.$vuetify.display.mobile) {
       this.drawer = false
+    }
+    
+    // Check authentication status on app load
+    this.authStore.checkAuth()
+  },
+  
+  methods: {
+    handleLogout() {
+      this.authStore.logout()
+      this.$router.push('/login')
     }
   }
 }
