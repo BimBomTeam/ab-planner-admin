@@ -163,6 +163,17 @@ export default {
     }
   },
   
+  watch: {
+    // Watch for authentication changes and redirect
+    'authStore.isAuthenticated': {
+      handler(newVal) {
+        if (!newVal && this.$route.path !== '/login') {
+          this.$router.push('/login')
+        }
+      }
+    }
+  },
+  
   mounted() {
     // Auto-close drawer on mobile initially
     if (this.$vuetify.display.mobile) {
@@ -174,9 +185,8 @@ export default {
   },
   
   methods: {
-    handleLogout() {
-      this.authStore.logout()
-      this.$router.push('/login')
+    async handleLogout() {
+      await this.authStore.logout()
     }
   }
 }

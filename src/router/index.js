@@ -21,7 +21,7 @@ const routes = [
     path: '/auth/callback',
     name: 'AuthCallback',
     component: AuthCallback,
-    meta: { requiresGuest: true }
+    meta: { requiresGuest: false, skipAuth: true }
   },
   {
     path: '/',
@@ -90,9 +90,8 @@ router.beforeEach((to, from, next) => {
   if (requiresAuth && !isAuthenticated) {
     // Redirect to login if trying to access protected route
     next('/login')
-  } else if (requiresGuest && isAuthenticated && to.name !== 'AuthCallback') {
+  } else if (requiresGuest && isAuthenticated) {
     // Redirect to dashboard if trying to access guest-only route while logged in
-    // Exception: allow AuthCallback even when authenticated (for the callback flow)
     next('/dashboard')
   } else {
     next()
