@@ -4,20 +4,10 @@
       <v-col cols="12" sm="8" md="5" lg="4">
         <v-card class="elevation-12 auth-card">
           <v-card-text class="pa-8 text-center">
-            <v-progress-circular
-              v-if="!error"
-              indeterminate
-              color="primary"
-              size="64"
-              class="mb-4"
-            ></v-progress-circular>
+            <v-progress-circular v-if="!error" indeterminate color="primary" size="64"
+              class="mb-4"></v-progress-circular>
 
-            <v-icon
-              v-else
-              size="64"
-              color="error"
-              class="mb-4"
-            >
+            <v-icon v-else size="64" color="error" class="mb-4">
               mdi-alert-circle
             </v-icon>
 
@@ -29,13 +19,7 @@
               {{ error || 'Trwa weryfikacja danych logowania przez Microsoft' }}
             </p>
 
-            <v-btn
-              v-if="error"
-              color="primary"
-              variant="outlined"
-              class="mt-4"
-              to="/login"
-            >
+            <v-btn v-if="error" color="primary" size="large" variant="outlined" class="mt-4" to="/login">
               Powrót do logowania
             </v-btn>
           </v-card-text>
@@ -61,6 +45,14 @@ export default {
   },
   async mounted() {
     await this.handleCallback()
+  },
+  beforeRouteLeave(to, from, next) {
+    // If there's an error and user is trying to leave, only allow if going to login
+    if (this.error && to.path !== '/login') {
+      next(false)
+    } else {
+      next()
+    }
   },
   methods: {
     async handleCallback() {

@@ -80,6 +80,14 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
+  // Skip auth checks for routes with skipAuth meta
+  const skipAuth = to.matched.some(record => record.meta.skipAuth)
+
+  if (skipAuth) {
+    next()
+    return
+  }
+
   // Check if user is authenticated
   authStore.checkAuth()
 

@@ -1,43 +1,21 @@
 <template>
   <v-app>
     <!-- Navigation Drawer - only show when authenticated -->
-    <v-navigation-drawer
-      v-if="authStore.isAuthenticated"
-      v-model="drawerModel"
-      :temporary="$vuetify.display.mobile"
-      :permanent="!$vuetify.display.mobile"
-      width="280"
-    >
-      <v-list-item
-        prepend-icon="mdi-school"
-        title="Admin Panel"
-        subtitle="AB Planner"
-        class="sidebar-header"
-      >
+    <v-navigation-drawer v-if="authStore.isAuthenticated" v-model="drawerModel" :temporary="$vuetify.display.mobile"
+      :permanent="!$vuetify.display.mobile" width="280">
+      <v-list-item prepend-icon="mdi-school" title="Admin Panel" subtitle="AB Planner" class="sidebar-header">
       </v-list-item>
 
       <v-divider></v-divider>
 
       <v-list density="compact" nav class="sidebar">
-        <v-list-item
-          v-for="item in menuItems"
-          :key="item.title"
-          :prepend-icon="item.icon"
-          :title="item.title"
-          :to="item.to"
-          :value="item.value"
-        ></v-list-item>
+        <v-list-item v-for="item in menuItems" :key="item.title" :prepend-icon="item.icon" :title="item.title"
+          :to="item.to" :value="item.value"></v-list-item>
       </v-list>
 
       <template v-slot:append>
         <div class="pa-4">
-          <v-btn
-            block
-            color="error"
-            variant="outlined"
-            prepend-icon="mdi-logout"
-            @click="handleLogout"
-          >
+          <v-btn block color="error" variant="outlined" prepend-icon="mdi-logout" @click="handleLogout">
             Wyloguj
           </v-btn>
         </div>
@@ -46,21 +24,14 @@
 
     <!-- App Bar - only show when authenticated -->
     <v-app-bar v-if="authStore.isAuthenticated">
-      <v-app-bar-nav-icon 
-        v-if="$vuetify.display.mobile"
-        @click="drawer = !drawer"
-      ></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon v-if="$vuetify.display.mobile" @click="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>AB Planner Admin</v-toolbar-title>
       <v-spacer></v-spacer>
-      
+
       <!-- User info -->
       <v-menu>
         <template v-slot:activator="{ props }">
-          <v-btn
-            v-bind="props"
-            variant="text"
-            prepend-icon="mdi-account-circle"
-          >
+          <v-btn v-bind="props" variant="text" prepend-icon="mdi-account-circle">
             {{ authStore.user?.name || 'User' }}
           </v-btn>
         </template>
@@ -79,7 +50,7 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      
+
       <v-btn icon="mdi-bell" variant="text"></v-btn>
     </v-app-bar>
 
@@ -150,7 +121,7 @@ export default {
       ]
     }
   },
-  
+
   computed: {
     // Keep drawer open on desktop, allow toggle on mobile
     drawerModel: {
@@ -162,28 +133,29 @@ export default {
       }
     }
   },
-  
+
   watch: {
     // Watch for authentication changes and redirect
     'authStore.isAuthenticated': {
       handler(newVal) {
-        if (!newVal && this.$route.path !== '/login') {
+        // Don't redirect if we're on the callback page (it handles its own errors)
+        if (!newVal && this.$route.path !== '/login' && this.$route.path !== '/auth/callback') {
           this.$router.push('/login')
         }
       }
     }
   },
-  
+
   mounted() {
     // Auto-close drawer on mobile initially
     if (this.$vuetify.display.mobile) {
       this.drawer = false
     }
-    
+
     // Check authentication status on app load
     this.authStore.checkAuth()
   },
-  
+
   methods: {
     async handleLogout() {
       await this.authStore.logout()

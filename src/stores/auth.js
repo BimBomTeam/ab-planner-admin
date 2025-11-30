@@ -118,7 +118,21 @@ export const useAuthStore = defineStore('auth', {
                 return { success: true, user }
             } catch (error) {
                 console.error('Microsoft login error:', error)
-                throw new Error(error.response?.data?.detail || 'Błąd podczas logowania przez Microsoft')
+
+                let errorMessage = 'Błąd podczas logowania przez Microsoft'
+                const errorData = error.response?.data
+
+                if (typeof errorData === 'string') {
+                    errorMessage = errorData
+                } else if (errorData) {
+                    errorMessage = errorData.detail ||
+                        errorData.message ||
+                        errorData.error_description ||
+                        errorData.error ||
+                        errorMessage
+                }
+
+                throw new Error(errorMessage)
             }
         },
 
