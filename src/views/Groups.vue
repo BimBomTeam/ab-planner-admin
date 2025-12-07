@@ -308,19 +308,19 @@ export default {
       }
     },
     
-    saveGroup() {
-      // Konwertuj program na format ProgramBrief
-      if (this.editedGroup.program && typeof this.editedGroup.program === 'object') {
-        this.editedGroup.program = {
-          id: this.editedGroup.program.id,
-          name: this.editedGroup.program.name
-        }
+    async saveGroup() {
+      const payload = {
+        code: this.editedGroup.code,
+        program_id: this.editedGroup.program?.id,
+        program_year_id: this.editedGroup.year?.id,
+        specialization_id: this.editedGroup.specialization?.id,
+        group_type: this.editedGroup.group_type?.code
       }
       
       if (this.editedGroup.id) {
-        this.groupsStore.updateGroup(this.editedGroup.id, this.editedGroup)
+        await this.groupsStore.updateGroup(this.editedGroup.id, payload)
       } else {
-        this.groupsStore.addGroup(this.editedGroup)
+        await this.groupsStore.createGroup(payload)
       }
       this.closeDialog()
     },
@@ -345,6 +345,10 @@ export default {
         default: return 'grey'
       }
     }
+  },
+  mounted() {
+    this.groupsStore.fetchGroups()
+    this.programsStore.fetchPrograms()
   }
 }
 </script>

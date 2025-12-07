@@ -1,111 +1,143 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
+
+const API_URL = '/api/v1'
 
 export const useProgramsStore = defineStore('programs', {
   state: () => ({
-    programs: [
-      {
-        id: 1,
-        name: 'Informatyka',
-        years: [
-          { id: 1, program_id: 1, year: 1 },
-          { id: 2, program_id: 1, year: 2 },
-          { id: 3, program_id: 1, year: 3 }
-        ],
-        specializations: [
-          { id: 1, program_id: 1, name: 'Inżynieria oprogramowania' },
-          { id: 2, program_id: 1, name: 'Sztuczna inteligencja' }
-        ]
-      },
-      {
-        id: 2,
-        name: 'Matematyka',
-        years: [
-          { id: 4, program_id: 2, year: 1 },
-          { id: 5, program_id: 2, year: 2 },
-          { id: 6, program_id: 2, year: 3 }
-        ],
-        specializations: [
-          { id: 3, program_id: 2, name: 'Matematyka stosowana' },
-          { id: 4, program_id: 2, name: 'Statystyka' }
-        ]
-      },
-      {
-        id: 3,
-        name: 'Fizyka',
-        years: [
-          { id: 7, program_id: 3, year: 1 },
-          { id: 8, program_id: 3, year: 2 }
-        ],
-        specializations: [
-          { id: 5, program_id: 3, name: 'Fizyka teoretyczna' },
-          { id: 6, program_id: 3, name: 'Fizyka doświadczalna' }
-        ]
-      }
-    ],
-    subjects: [
-      { id: 1, name: 'Programowanie obiektowe', code: 'PO' },
-      { id: 2, name: 'Bazy danych', code: 'BD' },
-      { id: 3, name: 'Algorytmy i struktury danych', code: 'ASD' },
-      { id: 4, name: 'Analiza matematyczna', code: 'AM' },
-      { id: 5, name: 'Algebra liniowa', code: 'AL' },
-      { id: 6, name: 'Mechanika klasyczna', code: 'MK' },
-      { id: 7, name: 'Elektrodynamika', code: 'ED' },
-      { id: 8, name: 'Statystyka matematyczna', code: 'SM' }
-    ]
+    programs: [],
+    loading: false,
+    error: null
   }),
   
   getters: {
     allPrograms: (state) => state.programs,
-    allSubjects: (state) => state.subjects,
     
     getProgramById: (state) => (id) => {
       return state.programs.find(program => program.id === id)
-    },
-    
-    getProgramBrief: (state) => (id) => {
-      const program = state.programs.find(p => p.id === id)
-      return program ? { id: program.id, name: program.name } : null
-    },
-    
-    getYearsByProgram: (state) => (programId) => {
-      const program = state.programs.find(p => p.id === programId)
-      return program ? program.years : []
-    },
-    
-    getSpecializationsByProgram: (state) => (programId) => {
-      const program = state.programs.find(p => p.id === programId)
-      return program ? program.specializations : []
     }
   },
   
   actions: {
-    addProgram(program) {
-      const id = Math.max(...this.programs.map(p => p.id)) + 1
-      this.programs.push({
-        ...program,
-        id,
-        years: [],
-        specializations: []
-      })
-    },
-    
-    updateProgram(id, updates) {
-      const index = this.programs.findIndex(program => program.id === id)
-      if (index !== -1) {
-        this.programs[index] = { ...this.programs[index], ...updates }
+    async fetchPrograms() {
+      const authStore = useAuthStore()
+      this.loading = true
+      try {
+        const response = await axios.get(`${API_URL}/programs`, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.programs = response.data
+      } catch (error) {
+        console.error('Error fetching programs:', error)
+        this.error = error
+      } finally {
+        this.loading = false
       }
     },
     
-    deleteProgram(id) {
-      const index = this.programs.findIndex(program => program.id === id)
-      if (index !== -1) {
-        this.programs.splice(index, 1)
+    async addProgram(programData) {
+      const authStore = useAuthStore()
+      this.loading = true
+      try {
+        await axios.post(`${API_URL}/programs`, programData, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        await this.fetchPrograms()
+      } catch (error) {
+        console.error('Error adding program:', error)
+        throw error
+      } finally {
+        this.loading = false
       }
     },
     
-    addSubject(subject) {
-      const id = Math.max(...this.subjects.map(s => s.id)) + 1
-      this.subjects.push({ ...subject, id })
+    async updateProgram(id, programData) {
+      const authStore = useAuthStore()
+      this.loading = true
+      try {
+        // API expects { name: "..." }, but UI might pass full object
+        const payload = { name: programData.name }
+        await axios.patch(`${API_URL}/programs/${id}`, payload, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        await this.fetchPrograms()
+      } catch (error) {
+        console.error('Error updating program:', error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async deleteProgram(id) {
+      const authStore = useAuthStore()
+      this.loading = true
+      try {
+        await axios.delete(`${API_URL}/programs/${id}`, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        await this.fetchPrograms()
+      } catch (error) {
+        console.error('Error deleting program:', error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Program Years
+    async addYear(programId, year) {
+        const authStore = useAuthStore()
+        try {
+            await axios.post(`${API_URL}/program-years`, { program_id: programId, year: year }, {
+                headers: { Authorization: `Bearer ${authStore.token}` }
+            })
+            await this.fetchPrograms() // Refresh to get updated nested structure
+        } catch (error) {
+            console.error('Error adding program year:', error)
+            throw error
+        }
+    },
+
+    async deleteYear(yearId) {
+        const authStore = useAuthStore()
+        try {
+            await axios.delete(`${API_URL}/program-years/${yearId}`, {
+                headers: { Authorization: `Bearer ${authStore.token}` }
+            })
+             await this.fetchPrograms()
+        } catch (error) {
+            console.error('Error deleting program year:', error)
+            throw error
+        }
+    },
+
+    // Specializations
+    async addSpecialization(programId, name) {
+        const authStore = useAuthStore()
+        try {
+            await axios.post(`${API_URL}/specializations`, { program_id: programId, name: name }, {
+                headers: { Authorization: `Bearer ${authStore.token}` }
+            })
+            await this.fetchPrograms()
+        } catch (error) {
+            console.error('Error adding specialization:', error)
+            throw error
+        }
+    },
+
+    async deleteSpecialization(specId) {
+        const authStore = useAuthStore()
+        try {
+            await axios.delete(`${API_URL}/specializations/${specId}`, {
+                headers: { Authorization: `Bearer ${authStore.token}` }
+            })
+            await this.fetchPrograms()
+        } catch (error) {
+            console.error('Error deleting specialization:', error)
+            throw error
+        }
     }
   }
 })

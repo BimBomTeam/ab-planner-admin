@@ -1,97 +1,168 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+import { useAuthStore } from './auth'
+
+const API_URL = '/api/v1'
 
 export const useLessonsStore = defineStore('lessons', {
   state: () => ({
-    lessons: [
-      {
-        id: 1,
-        starts_at: '2025-11-18T08:00:00Z',
-        ends_at: '2025-11-18T09:30:00Z',
-        status: 'scheduled',
-        lesson_type: 'lecture',
-        subject: { id: 1, name: 'Programowanie obiektowe', code: 'PO' },
-        room: { id: 1, number: '101', building: 'A', capacity: 50 },
-        group: { id: 1, code: 'INF1A' },
-        lecturer: { id: 2, name: 'Anna Nowak', email: 'anna.nowak@example.com' }
-      },
-      {
-        id: 2,
-        starts_at: '2025-11-18T10:00:00Z',
-        ends_at: '2025-11-18T11:30:00Z',
-        status: 'scheduled',
-        lesson_type: 'lab',
-        subject: { id: 2, name: 'Bazy danych', code: 'BD' },
-        room: { id: 2, number: '205', building: 'B', capacity: 25 },
-        group: { id: 2, code: 'INF1B' },
-        lecturer: { id: 2, name: 'Anna Nowak', email: 'anna.nowak@example.com' }
-      },
-      {
-        id: 3,
-        starts_at: '2025-11-19T12:00:00Z',
-        ends_at: '2025-11-19T13:30:00Z',
-        status: 'rescheduled',
-        lesson_type: 'lecture',
-        subject: { id: 4, name: 'Analiza matematyczna', code: 'AM' },
-        room: { id: 3, number: '301', building: 'C', capacity: 80 },
-        group: { id: 3, code: 'MAT1A' },
-        lecturer: { id: 2, name: 'Anna Nowak', email: 'anna.nowak@example.com' }
-      }
-    ],
-    rooms: [
-      { id: 1, number: '101', building: 'A', capacity: 50 },
-      { id: 2, number: '205', building: 'B', capacity: 25 },
-      { id: 3, number: '301', building: 'C', capacity: 80 },
-      { id: 4, number: '102', building: 'A', capacity: 30 }
-    ],
+    lessons: [],
+    loading: false,
+    error: null,
     lessonStatuses: [
       { value: 'scheduled', label: 'Zaplanowane' },
       { value: 'rescheduled', label: 'Przełożone' },
       { value: 'cancelled', label: 'Odwołane' }
+    ],
+    lessonTypes: [
+      { value: 'lecture', label: 'Wykład' },
+      { value: 'lab', label: 'Laboratorium' },
+      { value: 'seminar', label: 'Seminarium' },
+      { value: 'project', label: 'Projekt' }
     ]
   }),
-  
+
   getters: {
     getLessonById: (state) => (id) => {
       return state.lessons.find(lesson => lesson.id === id)
     },
-    getLessonsByGroup: (state) => (groupId) => {
-      return state.lessons.filter(lesson => lesson.group.id === groupId)
-    },
-    getLessonsByStatus: (state) => (status) => {
-      return state.lessons.filter(lesson => lesson.status === status)
-    },
     getLessonsToday: (state) => {
-      const today = new Date().toDateString()
-      return state.lessons.filter(lesson => {
-        const lessonDate = new Date(lesson.starts_at).toDateString()
-        return lessonDate === today
-      })
+      const today = new Date().toISOString().split('T')[0]
+      return state.lessons.filter(lesson => lesson.starts_at.startsWith(today))
     }
   },
-  
+
   actions: {
-    addLesson(lesson) {
-      const id = Math.max(...this.lessons.map(l => l.id)) + 1
-      this.lessons.push({ ...lesson, id })
-    },
-    
-    updateLesson(id, updates) {
-      const index = this.lessons.findIndex(lesson => lesson.id === id)
-      if (index !== -1) {
-        this.lessons[index] = { ...this.lessons[index], ...updates }
+    async fetchLessons(filters = {}) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        const params = new URLSearchParams()
+        if (filters.group_id) params.append('group_id', filters.group_id)
+        if (filters.date_from) params.append('date_from', filters.date_from)
+        if (filters.date_to) params.append('date_to', filters.date_to)
+
+        const response = await axios.get(`${API_URL}/lessons`, {
+          params,
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.lessons = response.data
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się pobrać listy zajęć'
+        throw error
+      } finally {
+        this.loading = false
       }
     },
-    
-    deleteLesson(id) {
-      const index = this.lessons.findIndex(lesson => lesson.id === id)
-      if (index !== -1) {
-        this.lessons.splice(index, 1)
+
+    async createLesson(lessonData) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        // Ensure proper types for IDs
+        const payload = {
+            ...lessonData,
+            subject_id: parseInt(lessonData.subject_id),
+            lecturer_user_id: parseInt(lessonData.lecturer_user_id),
+            room_id: parseInt(lessonData.room_id),
+            group_id: parseInt(lessonData.group_id)
+        }
+
+        const response = await axios.post(`${API_URL}/lessons`, payload, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.lessons.push(response.data)
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się dodać zajęć'
+        throw error
+      } finally {
+        this.loading = false
       }
     },
-    
-    addRoom(room) {
-      const id = Math.max(...this.rooms.map(r => r.id)) + 1
-      this.rooms.push({ ...room, id })
+
+    async createLessonSeries(seriesData) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+         // Ensure proper types for IDs in the nested lesson object
+         const lessonPayload = {
+            ...seriesData.lesson,
+            subject_id: parseInt(seriesData.lesson.subject_id),
+            lecturer_user_id: parseInt(seriesData.lesson.lecturer_user_id),
+            room_id: parseInt(seriesData.lesson.room_id),
+            group_id: parseInt(seriesData.lesson.group_id)
+        }
+
+        const payload = {
+            lesson: lessonPayload,
+            repeat_every_days: parseInt(seriesData.repeat_every_days),
+            occurrences: parseInt(seriesData.occurrences)
+        }
+
+        const response = await axios.post(`${API_URL}/lessons/series`, payload, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        
+        // Add all created lessons to state
+        if (Array.isArray(response.data)) {
+            this.lessons.push(...response.data)
+        }
+        
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się dodać serii zajęć'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async updateLesson(id, lessonData) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        const response = await axios.patch(`${API_URL}/lessons/${id}`, lessonData, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        const index = this.lessons.findIndex(l => l.id === id)
+        if (index !== -1) {
+          this.lessons[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się zaktualizować zajęć'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deleteLesson(id) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        await axios.delete(`${API_URL}/lessons/${id}`, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.lessons = this.lessons.filter(l => l.id !== id)
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się usunąć zajęć'
+        throw error
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

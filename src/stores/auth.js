@@ -49,7 +49,11 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         currentUser: (state) => state.user,
         isLoggedIn: (state) => state.isAuthenticated,
-        userRole: (state) => state.user?.role?.code || null
+        userRole: (state) => state.user?.role?.code || null,
+        
+        isAdmin: (state) => state.user?.role?.code === 'admin',
+        isTeacher: (state) => state.user?.role?.code === 'teacher',
+        isStudent: (state) => state.user?.role?.code === 'student'
     },
 
     actions: {
@@ -110,7 +114,6 @@ export const useAuthStore = defineStore('auth', {
                 // Save to localStorage
                 localStorage.setItem('access_token', access_token)
                 localStorage.setItem('refresh_token', refresh_token)
-                localStorage.setItem('user', JSON.stringify(user))
 
                 // Clear PKCE data
                 sessionStorage.removeItem('pkce_code_verifier')
@@ -189,7 +192,7 @@ export const useAuthStore = defineStore('auth', {
                 // Clear storage
                 localStorage.removeItem('access_token')
                 localStorage.removeItem('refresh_token')
-                localStorage.removeItem('user')
+                localStorage.removeItem('user') // Ensure it is cleaned up if existed
                 sessionStorage.removeItem('pkce_code_verifier')
             }
         },
@@ -198,12 +201,12 @@ export const useAuthStore = defineStore('auth', {
         checkAuth() {
             const accessToken = localStorage.getItem('access_token')
             const refreshToken = localStorage.getItem('refresh_token')
-            const user = localStorage.getItem('user')
+            // Don't read user from localStorage anymore
 
-            if (accessToken && refreshToken && user) {
+            if (accessToken && refreshToken) {
                 this.accessToken = accessToken
                 this.refreshToken = refreshToken
-                this.user = JSON.parse(user)
+                // User will be null initially, router guard must fetch it
                 this.isAuthenticated = true
                 return true
             }
@@ -221,7 +224,7 @@ export const useAuthStore = defineStore('auth', {
                 })
 
                 this.user = response.data
-                localStorage.setItem('user', JSON.stringify(response.data))
+                // localStorage.setItem('user', JSON.stringify(response.data))
 
                 return response.data
             } catch (error) {

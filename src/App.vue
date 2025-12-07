@@ -13,13 +13,7 @@
           :to="item.to" :value="item.value"></v-list-item>
       </v-list>
 
-      <template v-slot:append>
-        <div class="pa-4">
-          <v-btn block color="error" variant="outlined" prepend-icon="mdi-logout" @click="handleLogout">
-            Wyloguj
-          </v-btn>
-        </div>
-      </template>
+
     </v-navigation-drawer>
 
     <!-- App Bar - only show when authenticated -->
@@ -113,6 +107,24 @@ export default {
           value: 'notifications'
         },
         {
+          title: 'Plan lekcji',
+          icon: 'mdi-calendar-multiselect',
+          to: '/schedule',
+          value: 'schedule'
+        },
+        {
+          title: 'Sale',
+          icon: 'mdi-door',
+          to: '/rooms',
+          value: 'rooms'
+        },
+        {
+          title: 'Przedmioty',
+          icon: 'mdi-book-open-variant',
+          to: '/subjects',
+          value: 'subjects'
+        },
+        {
           title: 'Wybory studentów',
           icon: 'mdi-clipboard-check',
           to: '/student-selections',
@@ -181,13 +193,6 @@ export default {
 .sidebar .v-list-item {
   margin: 2px 0 !important;
   padding: 8px 12px !important;
-}
-
-/* Ensure proper mobile behavior */
-@media (max-width: 960px) {
-  .v-navigation-drawer--temporary {
-    z-index: 1005 !important;
-  }
 }
 
 /* Desktop - always show sidebar */

@@ -1,33 +1,14 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+import { useAuthStore } from './auth'
+
+const API_URL = '/api/v1'
 
 export const useGroupsStore = defineStore('groups', {
   state: () => ({
-    groups: [
-      {
-        id: 1,
-        code: 'INF1A',
-        program: { id: 1, name: 'Informatyka' },
-        year: { id: 1, program_id: 1, year: 1 },
-        specialization: { id: 1, program_id: 1, name: 'Inżynieria oprogramowania' },
-        group_type: { code: 'lecture', label: 'Wykład' }
-      },
-      {
-        id: 2,
-        code: 'INF1B',
-        program: { id: 1, name: 'Informatyka' },
-        year: { id: 1, program_id: 1, year: 1 },
-        specialization: { id: 1, program_id: 1, name: 'Inżynieria oprogramowania' },
-        group_type: { code: 'lab', label: 'Laboratorium' }
-      },
-      {
-        id: 3,
-        code: 'MAT1A',
-        program: { id: 2, name: 'Matematyka' },
-        year: { id: 4, program_id: 2, year: 1 },
-        specialization: { id: 3, program_id: 2, name: 'Matematyka stosowana' },
-        group_type: { code: 'lecture', label: 'Wykład' }
-      }
-    ],
+    groups: [],
+    loading: false,
+    error: null,
     groupTypes: [
       { code: 'lecture', label: 'Wykład' },
       { code: 'lab', label: 'Laboratorium' },
@@ -35,7 +16,7 @@ export const useGroupsStore = defineStore('groups', {
       { code: 'project', label: 'Projekt' }
     ]
   }),
-  
+
   getters: {
     getGroupById: (state) => (id) => {
       return state.groups.find(group => group.id === id)
@@ -47,24 +28,97 @@ export const useGroupsStore = defineStore('groups', {
       return state.groups.filter(group => group.group_type.code === groupType)
     }
   },
-  
+
   actions: {
-    addGroup(group) {
-      const id = Math.max(...this.groups.map(g => g.id)) + 1
-      this.groups.push({ ...group, id })
-    },
-    
-    updateGroup(id, updates) {
-      const index = this.groups.findIndex(group => group.id === id)
-      if (index !== -1) {
-        this.groups[index] = { ...this.groups[index], ...updates }
+    async fetchGroups(filters = {}) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        const params = new URLSearchParams()
+        if (filters.program_id) params.append('program_id', filters.program_id)
+        if (filters.program_year_id) params.append('program_year_id', filters.program_year_id)
+        if (filters.specialization_id) params.append('specialization_id', filters.specialization_id)
+        if (filters.group_type) params.append('group_type', filters.group_type)
+
+        const response = await axios.get(`${API_URL}/groups`, {
+          params,
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.groups = response.data
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się pobrać listy grup'
+        throw error
+      } finally {
+        this.loading = false
       }
     },
-    
-    deleteGroup(id) {
-      const index = this.groups.findIndex(group => group.id === id)
-      if (index !== -1) {
-        this.groups.splice(index, 1)
+
+    async createGroup(groupData) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        const payload = {
+            ...groupData,
+            program_id: parseInt(groupData.program_id),
+            program_year_id: parseInt(groupData.program_year_id),
+            specialization_id: parseInt(groupData.specialization_id)
+        }
+
+        const response = await axios.post(`${API_URL}/groups`, payload, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.groups.push(response.data)
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się utworzyć grupy'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async updateGroup(id, groupData) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        const response = await axios.patch(`${API_URL}/groups/${id}`, groupData, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        const index = this.groups.findIndex(g => g.id === id)
+        if (index !== -1) {
+          this.groups[index] = response.data
+        }
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się zaktualizować grupy'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async deleteGroup(id) {
+      this.loading = true
+      this.error = null
+      const authStore = useAuthStore()
+      
+      try {
+        await axios.delete(`${API_URL}/groups/${id}`, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        })
+        this.groups = this.groups.filter(g => g.id !== id)
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się usunąć grupy'
+        throw error
+      } finally {
+        this.loading = false
       }
     }
   }

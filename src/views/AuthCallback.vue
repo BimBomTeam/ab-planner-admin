@@ -74,14 +74,7 @@ export default {
         }
 
         // Exchange code for tokens
-        const result = await this.authStore.handleMicrosoftCallback(code)
-
-        // Check if user is student - reject login
-        if (result.user?.role?.code === 'student') {
-          await this.authStore.logout()
-          this.error = 'Dostęp do panelu administracyjnego nie jest dostępny dla studentów'
-          return
-        }
+        await this.authStore.handleMicrosoftCallback(code)
 
         // Redirect to dashboard
         this.$router.push('/dashboard')

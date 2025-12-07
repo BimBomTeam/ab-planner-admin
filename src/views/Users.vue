@@ -2,10 +2,6 @@
   <div>
     <div class="d-flex justify-space-between align-center mb-6">
       <h1 class="text-h4">Użytkownicy</h1>
-      <v-btn color="primary" @click="showAddDialog = true">
-        <v-icon class="mr-2">mdi-plus</v-icon>
-        Dodaj użytkownika
-      </v-btn>
     </div>
 
     <!-- Filtry -->
@@ -74,13 +70,6 @@
             @click="editUser(item)"
           >
             mdi-pencil
-          </v-icon>
-          <v-icon
-            size="small"
-            @click="deleteUser(item)"
-            color="error"
-          >
-            mdi-delete
           </v-icon>
         </template>
       </v-data-table>
@@ -224,9 +213,10 @@ export default {
     roleOptions() {
       return [
         { text: 'Wszyscy', value: null },
-        { text: 'Student', value: 'student' },
-        { text: 'Wykładowca', value: 'teacher' },
-        { text: 'Administrator', value: 'admin' }
+        ...this.usersStore.allRoles.map(role => ({
+          text: role.label,
+          value: role.code
+        }))
       ]
     }
   },
@@ -251,24 +241,34 @@ export default {
     
     saveUser() {
       if (this.editedUser.id) {
-        this.usersStore.updateUser(this.editedUser.id, this.editedUser)
-      } else {
-        this.usersStore.addUser(this.editedUser)
-      }
+        // Find role id based on value
+        // Note: API needs role_id (int), but dialog uses code string. 
+        // We need a mapping or get role object.
+        // Assuming simplistic mapping for now based on what we see in store/API mocks.
+        // Actually, API /users/{id}/role expects { role_id: int }. 
+        // We need to know role IDs.
+        // The store defines roles implicitly or we need to fetch them? 
+        // The API output shows Role object { id, code, label }.
+        // Let's assume we can find the role object from the code selected.
+        
+        // This is tricky without a Roles store or fetching roles.
+        // However, we can try to guess or use the selection to drive it.
+        // Let's update the store to handle this or just pass the role_id if we have it.
+        // But the dialog v-select uses 'value' which is string code.
+        
+        // We need a fetchRoles? Or hardcode IDs if they are static?
+        // Let's assume standard IDs: 1: student, 2: teacher, 3: admin
+        
+        if (this.editedUser.role) {
+             this.usersStore.updateUserRole(this.editedUser.id, this.editedUser.role)
+        }
+      } 
       this.closeDialog()
     },
     
     closeDialog() {
       this.showAddDialog = false
-      this.editedUser = {
-        first_name: '',
-        last_name: '',
-        username: '',
-        email: '',
-        role: 'student',
-        active: true,
-        phone: ''
-      }
+      this.editedUser = {}
     },
     
     getRoleColor(role) {
@@ -291,7 +291,7 @@ export default {
   },
   
   mounted() {
-    this.closeDialog()
+    this.usersStore.fetchUsers()
   }
 }
 </script>

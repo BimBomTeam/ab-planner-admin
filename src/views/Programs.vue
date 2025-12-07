@@ -95,6 +95,18 @@
       </v-col>
     </v-row>
 
+    <!-- Loading state -->
+    <div v-if="programsStore.loading" class="d-flex justify-center align-center py-12">
+      <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else-if="programsStore.programs.length === 0" class="text-center py-12">
+      <v-icon size="80" color="grey-lighten-2">mdi-school-outline</v-icon>
+      <h3 class="text-h5 text-grey mt-4">Brak programów studiów</h3>
+      <p class="text-grey mb-6">Lista jest pusta. Dodaj pierwszy program przyciskiem powyżej.</p>
+    </div>
+
     <!-- Dialog dodawania/edycji programu -->
     <v-dialog v-model="showAddDialog" max-width="600px">
       <v-card>
@@ -206,73 +218,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- Sekcja przedmiotów -->
-    <div class="mt-8">
-      <div class="d-flex justify-space-between align-center mb-6">
-        <h2 class="text-h5">Przedmioty</h2>
-        <v-btn color="success" @click="showSubjectDialog = true">
-          <v-icon class="mr-2">mdi-plus</v-icon>
-          Dodaj przedmiot
-        </v-btn>
-      </div>
-
-      <v-card>
-        <v-data-table
-          :headers="subjectHeaders"
-          :items="programsStore.subjects"
-          item-value="id"
-        >
-          <template #item.actions="{ item }">
-            <v-icon
-              size="small"
-              @click="deleteSubject(item)"
-              color="error"
-            >
-              mdi-delete
-            </v-icon>
-          </template>
-        </v-data-table>
-      </v-card>
-    </div>
-
-    <!-- Dialog dodawania przedmiotu -->
-    <v-dialog v-model="showSubjectDialog" max-width="500px">
-      <v-card>
-        <v-card-title class="pa-6 pb-4">
-          <span class="text-h5">Dodaj przedmiot</span>
-        </v-card-title>
-        
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="newSubject.name"
-                  label="Nazwa przedmiotu"
-                  variant="outlined"
-                  required
-                ></v-text-field>
-              </v-col>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="newSubject.code"
-                  label="Kod przedmiotu"
-                  variant="outlined"
-                  required
-                ></v-text-field>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn variant="text" @click="closeSubjectDialog">Anuluj</v-btn>
-          <v-btn color="success" @click="saveSubject">Zapisz</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -289,25 +234,9 @@ export default {
     return {
       showAddDialog: false,
       showDeleteDialog: false,
-      showSubjectDialog: false,
-      editedProgram: {
-        name: '',
-        years: [],
-        specializations: []
-      },
       programToDelete: null,
-      newSubject: {
-        name: '',
-        code: ''
-      },
       newYear: null,
-      newSpecialization: '',
-      subjectHeaders: [
-        { title: 'ID', key: 'id', width: '80px' },
-        { title: 'Nazwa', key: 'name' },
-        { title: 'Kod', key: 'code' },
-        { title: 'Akcje', key: 'actions', sortable: false, width: '120px' }
-      ]
+      newSpecialization: ''
     }
   },
   
@@ -361,69 +290,56 @@ export default {
       this.newSpecialization = ''
     },
 
-    addYear() {
-      if (!this.editedProgram.years) {
-        this.editedProgram.years = []
-      }
-      if (this.newYear && !this.editedProgram.years.some(y => y.year === this.newYear)) {
-        const newId = Math.max(...this.editedProgram.years.map(y => y.id), 0) + 1
-        this.editedProgram.years.push({
-          id: newId,
-          program_id: this.editedProgram.id || null,
-          year: this.newYear
-        })
-        this.newYear = null
-      }
+    async addYear() {
+        if (this.newYear && this.editedProgram.id) {
+            await this.programsStore.addYear(this.editedProgram.id, this.newYear)
+            // Refresh local data from store after update
+            // Ideally we should just use the store data directly in the loop, 
+            // but the dialog uses a copy 'editedProgram'. 
+            // We need to re-sync editedProgram or close/re-open.
+            // For simplicity, let's close and re-open or just fetch fresh data.
+            const updated = this.programsStore.getProgramById(this.editedProgram.id)
+            if (updated) {
+                this.editedProgram.years = [...updated.years]
+            }
+            this.newYear = null
+        }
     },
 
-    removeYear(yearId) {
-      if (this.editedProgram.years) {
-        this.editedProgram.years = this.editedProgram.years.filter(y => y.id !== yearId)
-      }
+    async removeYear(yearId) {
+        if (confirm('Czy na pewno chcesz usunąć ten rok?') && this.editedProgram.id) {
+            await this.programsStore.deleteYear(yearId)
+             const updated = this.programsStore.getProgramById(this.editedProgram.id)
+            if (updated) {
+                this.editedProgram.years = [...updated.years]
+            }
+        }
     },
 
-    addSpecialization() {
-      if (!this.editedProgram.specializations) {
-        this.editedProgram.specializations = []
-      }
-      if (this.newSpecialization && !this.editedProgram.specializations.some(s => s.name === this.newSpecialization)) {
-        const newId = Math.max(...this.editedProgram.specializations.map(s => s.id), 0) + 1
-        this.editedProgram.specializations.push({
-          id: newId,
-          program_id: this.editedProgram.id || null,
-          name: this.newSpecialization
-        })
-        this.newSpecialization = ''
-      }
+    async addSpecialization() {
+         if (this.newSpecialization && this.editedProgram.id) {
+            await this.programsStore.addSpecialization(this.editedProgram.id, this.newSpecialization)
+            const updated = this.programsStore.getProgramById(this.editedProgram.id)
+            if (updated) {
+                this.editedProgram.specializations = [...updated.specializations]
+            }
+            this.newSpecialization = ''
+        }
     },
 
-    removeSpecialization(specId) {
-      if (this.editedProgram.specializations) {
-        this.editedProgram.specializations = this.editedProgram.specializations.filter(s => s.id !== specId)
-      }
-    },
-
-    saveSubject() {
-      this.programsStore.addSubject(this.newSubject)
-      this.closeSubjectDialog()
-    },
-
-    closeSubjectDialog() {
-      this.showSubjectDialog = false
-      this.newSubject = { name: '', code: '' }
-    },
-
-    deleteSubject(subject) {
-      // Implementacja usuwania przedmiotu
-      const index = this.programsStore.subjects.findIndex(s => s.id === subject.id)
-      if (index !== -1) {
-        this.programsStore.subjects.splice(index, 1)
-      }
+    async removeSpecialization(specId) {
+        if (confirm('Czy na pewno chcesz usunąć tę specjalizację?') && this.editedProgram.id) {
+            await this.programsStore.deleteSpecialization(specId)
+            const updated = this.programsStore.getProgramById(this.editedProgram.id)
+            if (updated) {
+                this.editedProgram.specializations = [...updated.specializations]
+            }
+        }
     }
   },
   
   mounted() {
-    this.closeDialog()
+    this.programsStore.fetchPrograms()
   }
 }
 </script>

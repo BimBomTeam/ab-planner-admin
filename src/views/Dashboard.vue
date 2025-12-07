@@ -4,49 +4,49 @@
     
     <!-- Karty statystyk -->
     <v-row class="mb-6">
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="6" md="3">
         <v-card color="primary" dark>
-          <v-card-title class="d-flex align-center">
-            <v-icon class="mr-3">mdi-account-group</v-icon>
+          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
+            <v-icon class="mr-2 mr-md-3" size="small">mdi-account-group</v-icon>
             Użytkownicy
           </v-card-title>
-          <v-card-text class="text-h3">
+          <v-card-text class="text-h4 text-md-h3 px-3">
             {{ usersStore.users.length }}
           </v-card-text>
         </v-card>
       </v-col>
       
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="6" md="3">
         <v-card color="success" dark>
-          <v-card-title class="d-flex align-center">
-            <v-icon class="mr-3">mdi-school</v-icon>
+          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
+            <v-icon class="mr-2 mr-md-3" size="small">mdi-school</v-icon>
             Programy
           </v-card-title>
-          <v-card-text class="text-h3">
+          <v-card-text class="text-h4 text-md-h3 px-3">
             {{ programsStore.programs.length }}
           </v-card-text>
         </v-card>
       </v-col>
       
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="6" md="3">
         <v-card color="warning" dark>
-          <v-card-title class="d-flex align-center">
-            <v-icon class="mr-3">mdi-account-multiple</v-icon>
+          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
+            <v-icon class="mr-2 mr-md-3" size="small">mdi-account-multiple</v-icon>
             Grupy
           </v-card-title>
-          <v-card-text class="text-h3">
+          <v-card-text class="text-h4 text-md-h3 px-3">
             {{ groupsStore.groups.length }}
           </v-card-text>
         </v-card>
       </v-col>
       
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="6" md="3">
         <v-card color="info" dark>
-          <v-card-title class="d-flex align-center">
-            <v-icon class="mr-3">mdi-calendar-clock</v-icon>
+          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
+            <v-icon class="mr-2 mr-md-3" size="small">mdi-calendar-clock</v-icon>
             Dzisiejsze zajęcia
           </v-card-title>
-          <v-card-text class="text-h3">
+          <v-card-text class="text-h4 text-md-h3 px-3">
             {{ lessonsStore.getLessonsToday.length }}
           </v-card-text>
         </v-card>
@@ -57,17 +57,18 @@
     <v-row>
       <v-col cols="12" md="8">
         <v-card class="elevation-3">
-          <v-card-title class="d-flex justify-space-between align-center bg-primary text-white pa-4">
-            <div class="d-flex align-center">
-              <v-icon class="mr-3" size="28">mdi-calendar-today</v-icon>
-              <span class="text-h5">Zajęcia</span>
+          <v-card-title class="d-flex flex-wrap justify-space-between align-center bg-primary text-white pa-3">
+            <div class="d-flex align-center mb-2 mb-sm-0">
+              <v-icon class="mr-2" size="24">mdi-calendar-today</v-icon>
+              <span class="text-h6">Zajęcia</span>
             </div>
-            <div class="d-flex align-center">
+            
+            <div class="d-flex align-center justify-end flex-grow-1 flex-sm-grow-0">
               <v-btn
                 icon
                 size="small"
-                variant="outlined"
-                class="mr-2 text-white border-white"
+                variant="text"
+                class="text-white"
                 @click="changeDate(-1)"
               >
                 <v-icon>mdi-chevron-left</v-icon>
@@ -77,12 +78,11 @@
                 <template v-slot:activator="{ props }">
                   <v-btn
                     v-bind="props"
-                    variant="outlined"
-                    class="text-white border-white mx-2"
-                    style="min-width: 140px;"
+                    variant="text"
+                    class="text-white mx-1 px-2 font-weight-bold"
                   >
-                    <v-icon class="mr-2">mdi-calendar</v-icon>
                     {{ formatDisplayDate(selectedDate) }}
+                    <v-icon size="small" class="ml-1">mdi-chevron-down</v-icon>
                   </v-btn>
                 </template>
                 
@@ -91,14 +91,15 @@
                   locale="pl"
                   show-adjacent-months
                   elevation="8"
+                  color="primary"
                 ></v-date-picker>
               </v-menu>
               
               <v-btn
                 icon
                 size="small"
-                variant="outlined"
-                class="ml-2 text-white border-white"
+                variant="text"
+                class="text-white"
                 @click="changeDate(1)"
               >
                 <v-icon>mdi-chevron-right</v-icon>
@@ -364,6 +365,13 @@ export default {
         default: return 'mdi-information'
       }
     }
+  },
+  mounted() {
+    this.usersStore.fetchUsers()
+    this.programsStore.fetchPrograms()
+    this.groupsStore.fetchGroups()
+    this.lessonsStore.fetchLessons()
+    this.notificationsStore.fetchNotifications() 
   }
 }
 </script>
