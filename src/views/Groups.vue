@@ -274,19 +274,20 @@ export default {
       ]
     },
     availableYears() {
-      if (!this.editedGroup.program) return []
+      if (!this.editedGroup.program || !this.editedGroup.program.id) return []
       
-      const program = this.programsStore.programs.find(p => p.id === this.editedGroup.program.id)
-      return program ? program.years.map(year => ({
+      const program = this.programsStore.programs.find(p => p.id == this.editedGroup.program.id)
+      
+      return (program && program.years) ? program.years.map(year => ({
         ...year,
         label: `${year.year} rok`
       })) : []
     },
     availableSpecializations() {
-      if (!this.editedGroup.program) return []
+      if (!this.editedGroup.program || !this.editedGroup.program.id) return []
       
-      const program = this.programsStore.programs.find(p => p.id === this.editedGroup.program.id)
-      return program ? program.specializations : []
+      const program = this.programsStore.programs.find(p => p.id == this.editedGroup.program.id)
+      return (program && program.specializations) ? program.specializations : []
     }
   },
   methods: {

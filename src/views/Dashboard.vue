@@ -235,6 +235,7 @@
 
 <script>
 import { useUsersStore } from '@/stores/users'
+import { useAuthStore } from '@/stores/auth'
 import { useProgramsStore } from '@/stores/programs'
 import { useGroupsStore } from '@/stores/groups'
 import { useLessonsStore } from '@/stores/lessons'
@@ -254,7 +255,8 @@ export default {
       programsStore,
       groupsStore,
       lessonsStore,
-      notificationsStore
+      notificationsStore,
+      authStore: useAuthStore()
     }
   },
   data() {
@@ -367,7 +369,9 @@ export default {
     }
   },
   mounted() {
-    this.usersStore.fetchUsers()
+    if (this.authStore.isAdmin) {
+      this.usersStore.fetchUsers()
+    }
     this.programsStore.fetchPrograms()
     this.groupsStore.fetchGroups()
     this.lessonsStore.fetchLessons()

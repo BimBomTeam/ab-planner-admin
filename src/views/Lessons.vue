@@ -360,6 +360,7 @@ import { useLessonsStore } from '@/stores/lessons'
 import { useGroupsStore } from '@/stores/groups'
 import { useProgramsStore } from '@/stores/programs'
 import { useUsersStore } from '@/stores/users'
+import { useRoomsStore } from '@/stores/rooms'
 
 export default {
   name: 'Lessons',
@@ -368,7 +369,8 @@ export default {
     const groupsStore = useGroupsStore()
     const programsStore = useProgramsStore()
     const usersStore = useUsersStore()
-    return { lessonsStore, groupsStore, programsStore, usersStore }
+    const roomsStore = useRoomsStore()
+    return { lessonsStore, groupsStore, programsStore, usersStore, roomsStore }
   },
   data() {
     return {
@@ -457,7 +459,7 @@ export default {
       }))
     },
     roomsWithLabels() {
-      return this.lessonsStore.rooms.map(room => ({
+      return this.roomsStore.rooms.map(room => ({
         id: room.id,
         number: room.number,
         building: room.building,
@@ -630,6 +632,13 @@ export default {
       const typeObj = this.lessonTypes.find(t => t.value === type)
       return typeObj ? typeObj.title : type
     }
+  },
+  mounted() {
+    this.lessonsStore.fetchLessons()
+    this.groupsStore.fetchGroups()
+    this.programsStore.fetchPrograms()
+    this.usersStore.fetchUsers()
+    this.roomsStore.fetchRooms()
   }
 }
 </script>
