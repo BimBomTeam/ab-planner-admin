@@ -45,8 +45,7 @@ export const useLessonsStore = defineStore('lessons', {
         if (filters.date_to) params.append('date_to', filters.date_to)
 
         const response = await axios.get(`${API_URL}/lessons`, {
-          params,
-          headers: { Authorization: `Bearer ${authStore.token}` }
+          params
         })
         this.lessons = response.data
         return response.data
@@ -73,9 +72,7 @@ export const useLessonsStore = defineStore('lessons', {
             group_id: parseInt(lessonData.group_id)
         }
 
-        const response = await axios.post(`${API_URL}/lessons`, payload, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.post(`${API_URL}/lessons`, payload)
         this.lessons.push(response.data)
         return response.data
       } catch (error) {
@@ -107,9 +104,7 @@ export const useLessonsStore = defineStore('lessons', {
             occurrences: parseInt(seriesData.occurrences)
         }
 
-        const response = await axios.post(`${API_URL}/lessons/series`, payload, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.post(`${API_URL}/lessons/series`, payload)
         
         // Add all created lessons to state
         if (Array.isArray(response.data)) {
@@ -131,9 +126,7 @@ export const useLessonsStore = defineStore('lessons', {
       const authStore = useAuthStore()
       
       try {
-        const response = await axios.patch(`${API_URL}/lessons/${id}`, lessonData, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.patch(`${API_URL}/lessons/${id}`, lessonData)
         const index = this.lessons.findIndex(l => l.id === id)
         if (index !== -1) {
           this.lessons[index] = response.data
@@ -153,9 +146,7 @@ export const useLessonsStore = defineStore('lessons', {
       const authStore = useAuthStore()
       
       try {
-        await axios.delete(`${API_URL}/lessons/${id}`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        await axios.delete(`${API_URL}/lessons/${id}`)
         this.lessons = this.lessons.filter(l => l.id !== id)
       } catch (error) {
         this.error = error.response?.data?.detail || 'Nie udało się usunąć zajęć'

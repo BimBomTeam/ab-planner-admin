@@ -24,9 +24,7 @@ export const useRoomsStore = defineStore('rooms', {
       const authStore = useAuthStore()
       
       try {
-        const response = await axios.get(`${API_URL}/rooms`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.get(`${API_URL}/rooms`)
         this.rooms = response.data
         return response.data
       } catch (error) {
@@ -43,9 +41,7 @@ export const useRoomsStore = defineStore('rooms', {
       const authStore = useAuthStore()
       
       try {
-        const response = await axios.post(`${API_URL}/rooms`, roomData, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.post(`${API_URL}/rooms`, roomData)
         this.rooms.push(response.data)
         return response.data
       } catch (error) {
@@ -62,9 +58,7 @@ export const useRoomsStore = defineStore('rooms', {
       const authStore = useAuthStore()
       
       try {
-        const response = await axios.patch(`${API_URL}/rooms/${id}`, roomData, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.patch(`${API_URL}/rooms/${id}`, roomData)
         const index = this.rooms.findIndex(r => r.id === id)
         if (index !== -1) {
           this.rooms[index] = response.data
@@ -84,9 +78,7 @@ export const useRoomsStore = defineStore('rooms', {
       const authStore = useAuthStore()
       
       try {
-        await axios.delete(`${API_URL}/rooms/${id}`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        await axios.delete(`${API_URL}/rooms/${id}`)
         this.rooms = this.rooms.filter(r => r.id !== id)
       } catch (error) {
         this.error = error.response?.data?.detail || 'Nie udało się usunąć sali'

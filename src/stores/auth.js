@@ -172,12 +172,7 @@ export const useAuthStore = defineStore('auth', {
                 if (this.refreshToken) {
                     await axios.post(
                         `${API_BASE_URL}/auth/logout`,
-                        { refresh_token: this.refreshToken },
-                        {
-                            headers: {
-                                Authorization: `Bearer ${this.accessToken}`
-                            }
-                        }
+                        { refresh_token: this.refreshToken }
                     )
                 }
             } catch (error) {
@@ -217,11 +212,7 @@ export const useAuthStore = defineStore('auth', {
         // Get current user from API
         async getCurrentUser() {
             try {
-                const response = await axios.get(`${API_BASE_URL}/users/me`, {
-                    headers: {
-                        Authorization: `Bearer ${this.accessToken}`
-                    }
-                })
+                const response = await axios.get(`${API_BASE_URL}/users/me`)
 
                 this.user = response.data
                 // localStorage.setItem('user', JSON.stringify(response.data))
@@ -241,6 +232,20 @@ export const useAuthStore = defineStore('auth', {
         }
     }
 })
+
+// Axios interceptor for injecting the token
+axios.interceptors.request.use(
+    (config) => {
+        const authStore = useAuthStore()
+        if (authStore.accessToken) {
+            config.headers.Authorization = `Bearer ${authStore.accessToken}`
+        }
+        return config
+    },
+    (error) => {
+        return Promise.reject(error)
+    }
+)
 
 // Axios interceptor for automatic token refresh
 axios.interceptors.response.use(

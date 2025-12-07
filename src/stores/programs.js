@@ -24,9 +24,7 @@ export const useProgramsStore = defineStore('programs', {
       const authStore = useAuthStore()
       this.loading = true
       try {
-        const response = await axios.get(`${API_URL}/programs`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.get(`${API_URL}/programs`)
         this.programs = response.data
       } catch (error) {
         console.error('Error fetching programs:', error)
@@ -40,9 +38,7 @@ export const useProgramsStore = defineStore('programs', {
       const authStore = useAuthStore()
       this.loading = true
       try {
-        await axios.post(`${API_URL}/programs`, programData, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        await axios.post(`${API_URL}/programs`, programData)
         await this.fetchPrograms()
       } catch (error) {
         console.error('Error adding program:', error)
@@ -58,9 +54,7 @@ export const useProgramsStore = defineStore('programs', {
       try {
         // API expects { name: "..." }, but UI might pass full object
         const payload = { name: programData.name }
-        await axios.patch(`${API_URL}/programs/${id}`, payload, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        await axios.patch(`${API_URL}/programs/${id}`, payload)
         await this.fetchPrograms()
       } catch (error) {
         console.error('Error updating program:', error)
@@ -74,9 +68,7 @@ export const useProgramsStore = defineStore('programs', {
       const authStore = useAuthStore()
       this.loading = true
       try {
-        await axios.delete(`${API_URL}/programs/${id}`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        await axios.delete(`${API_URL}/programs/${id}`)
         await this.fetchPrograms()
       } catch (error) {
         console.error('Error deleting program:', error)
@@ -90,9 +82,7 @@ export const useProgramsStore = defineStore('programs', {
     async addYear(programId, year) {
         const authStore = useAuthStore()
         try {
-            await axios.post(`${API_URL}/program-years`, { program_id: programId, year: year }, {
-                headers: { Authorization: `Bearer ${authStore.token}` }
-            })
+            await axios.post(`${API_URL}/program-years`, { program_id: programId, year: year })
             await this.fetchPrograms() // Refresh to get updated nested structure
         } catch (error) {
             console.error('Error adding program year:', error)
@@ -103,9 +93,7 @@ export const useProgramsStore = defineStore('programs', {
     async deleteYear(yearId) {
         const authStore = useAuthStore()
         try {
-            await axios.delete(`${API_URL}/program-years/${yearId}`, {
-                headers: { Authorization: `Bearer ${authStore.token}` }
-            })
+            await axios.delete(`${API_URL}/program-years/${yearId}`)
              await this.fetchPrograms()
         } catch (error) {
             console.error('Error deleting program year:', error)
@@ -117,9 +105,7 @@ export const useProgramsStore = defineStore('programs', {
     async addSpecialization(programId, name) {
         const authStore = useAuthStore()
         try {
-            await axios.post(`${API_URL}/specializations`, { program_id: programId, name: name }, {
-                headers: { Authorization: `Bearer ${authStore.token}` }
-            })
+            await axios.post(`${API_URL}/specializations`, { program_id: programId, name: name })
             await this.fetchPrograms()
         } catch (error) {
             console.error('Error adding specialization:', error)
@@ -130,9 +116,7 @@ export const useProgramsStore = defineStore('programs', {
     async deleteSpecialization(specId) {
         const authStore = useAuthStore()
         try {
-            await axios.delete(`${API_URL}/specializations/${specId}`, {
-                headers: { Authorization: `Bearer ${authStore.token}` }
-            })
+            await axios.delete(`${API_URL}/specializations/${specId}`)
             await this.fetchPrograms()
         } catch (error) {
             console.error('Error deleting specialization:', error)

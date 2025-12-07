@@ -43,8 +43,7 @@ export const useGroupsStore = defineStore('groups', {
         if (filters.group_type) params.append('group_type', filters.group_type)
 
         const response = await axios.get(`${API_URL}/groups`, {
-          params,
-          headers: { Authorization: `Bearer ${authStore.token}` }
+          params
         })
         this.groups = response.data
         return response.data
@@ -69,9 +68,7 @@ export const useGroupsStore = defineStore('groups', {
             specialization_id: parseInt(groupData.specialization_id)
         }
 
-        const response = await axios.post(`${API_URL}/groups`, payload, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.post(`${API_URL}/groups`, payload)
         this.groups.push(response.data)
         return response.data
       } catch (error) {
@@ -88,9 +85,7 @@ export const useGroupsStore = defineStore('groups', {
       const authStore = useAuthStore()
       
       try {
-        const response = await axios.patch(`${API_URL}/groups/${id}`, groupData, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.patch(`${API_URL}/groups/${id}`, groupData)
         const index = this.groups.findIndex(g => g.id === id)
         if (index !== -1) {
           this.groups[index] = response.data
@@ -110,9 +105,7 @@ export const useGroupsStore = defineStore('groups', {
       const authStore = useAuthStore()
       
       try {
-        await axios.delete(`${API_URL}/groups/${id}`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        await axios.delete(`${API_URL}/groups/${id}`)
         this.groups = this.groups.filter(g => g.id !== id)
       } catch (error) {
         this.error = error.response?.data?.detail || 'Nie udało się usunąć grupy'

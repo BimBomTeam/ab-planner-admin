@@ -46,9 +46,7 @@ export const useUsersStore = defineStore('users', {
       const authStore = useAuthStore()
       
       try {
-        const response = await axios.get(`${API_URL}/users`, {
-          headers: { Authorization: `Bearer ${authStore.token}` }
-        })
+        const response = await axios.get(`${API_URL}/users`)
         this.users = response.data
         return response.data
       } catch (error) {
@@ -80,8 +78,7 @@ export const useUsersStore = defineStore('users', {
       
       try {
         const response = await axios.patch(`${API_URL}/users/${userId}/role`, 
-          { role_id: roleId },
-          { headers: { Authorization: `Bearer ${authStore.token}` } }
+          { role_id: roleId }
         )
         
         // Update local state
