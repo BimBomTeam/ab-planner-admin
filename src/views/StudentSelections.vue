@@ -250,7 +250,7 @@
               <v-col cols="12">
                 <v-select
                   v-model="newSelection.group_id"
-                  :items="groupsStore.groups"
+                  :items="dialogGroupOptions"
                   item-title="groupLabel"
                   item-value="id"
                   label="Grupa"
@@ -363,6 +363,12 @@ export default {
         }))
       ]
     },
+    dialogGroupOptions() {
+      return this.groupsStore.groups.map(group => ({
+        ...group,
+        groupLabel: `${group.code} - ${group.program?.name || ''} (${group.specialization?.name || ''})`
+      }))
+    },
     programOptions() {
       return [
         { title: 'Wszystkie', value: null },
@@ -403,16 +409,16 @@ export default {
       this.showDeleteDialog = true
     },
     
-    confirmDelete() {
+    async confirmDelete() {
       if (this.selectionToDelete) {
-        this.selectionsStore.deleteSelection(this.selectionToDelete.id)
+        await this.selectionsStore.deleteSelection(this.selectionToDelete.id)
         this.showDeleteDialog = false
         this.selectionToDelete = null
       }
     },
     
-    saveSelection() {
-      this.selectionsStore.addSelection(this.newSelection)
+    async saveSelection() {
+      await this.selectionsStore.addSelection(this.newSelection)
       this.closeDialog()
     },
     
@@ -454,10 +460,10 @@ export default {
     }
   },
   mounted() {
-    // Dodaj groupLabel do wszystkich grup
-    this.groupsStore.groups.forEach(group => {
-      group.groupLabel = `${group.code} - ${group.program.name} (${group.specialization.name})`
-    })
+    this.selectionsStore.fetchSelections()
+    this.groupsStore.fetchGroups()
+    this.usersStore.fetchUsers()
+    this.programsStore.fetchPrograms()
   }
 }
 </script>

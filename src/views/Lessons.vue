@@ -176,167 +176,12 @@
     </v-card>
 
     <!-- Dialog dodawania/edycji zajęć -->
-    <v-dialog v-model="showAddDialog" max-width="800px">
-      <v-card>
-        <v-card-title class="pa-6 pb-4">
-          <span class="text-h5">{{ editedLesson.id ? 'Edytuj' : 'Dodaj' }} zajęcia</span>
-        </v-card-title>
-        
-        <v-card-text>
-          <v-container>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="editedLesson.subject"
-                  :items="programsStore.subjects"
-                  item-title="name"
-                  item-value="id"
-                  label="Przedmiot"
-                  variant="outlined"
-                  required
-                  return-object
-                ></v-select>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="editedLesson.group"
-                  :items="groupsStore.groups"
-                  item-title="code"
-                  item-value="id"
-                  label="Grupa"
-                  variant="outlined"
-                  required
-                  return-object
-                ></v-select>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-menu>
-                  <template v-slot:activator="{ props }">
-                    <v-text-field
-                      v-bind="props"
-                      :model-value="formatDateTimeDisplay(editedLesson.starts_at)"
-                      label="Początek zajęć"
-                      variant="outlined"
-                      required
-                      prepend-inner-icon="mdi-calendar-clock"
-                      readonly
-                    ></v-text-field>
-                  </template>
-                  <v-card>
-                    <v-card-text>
-                      <v-date-picker
-                        v-model="editedLessonStartDate"
-                        locale="pl"
-                        show-adjacent-months
-                      ></v-date-picker>
-                      <v-time-picker
-                        v-model="editedLessonStartTime"
-                        format="24hr"
-                        class="mt-4"
-                      ></v-time-picker>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn @click="updateStartDateTime">OK</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-menu>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-menu>
-                  <template v-slot:activator="{ props }">
-                    <v-text-field
-                      v-bind="props"
-                      :model-value="formatDateTimeDisplay(editedLesson.ends_at)"
-                      label="Koniec zajęć"
-                      variant="outlined"
-                      required
-                      prepend-inner-icon="mdi-calendar-clock"
-                      readonly
-                    ></v-text-field>
-                  </template>
-                  <v-card>
-                    <v-card-text>
-                      <v-date-picker
-                        v-model="editedLessonEndDate"
-                        locale="pl"
-                        show-adjacent-months
-                      ></v-date-picker>
-                      <v-time-picker
-                        v-model="editedLessonEndTime"
-                        format="24hr"
-                        class="mt-4"
-                      ></v-time-picker>
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn @click="updateEndDateTime">OK</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-menu>
-              </v-col>
-              
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="editedLesson.lesson_type"
-                  :items="lessonTypes"
-                  label="Typ zajęć"
-                  variant="outlined"
-                  required
-                ></v-select>
-              </v-col>
-              
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="editedLesson.status"
-                  :items="lessonsStore.lessonStatuses"
-                  item-title="label"
-                  item-value="value"
-                  label="Status"
-                  variant="outlined"
-                  required
-                ></v-select>
-              </v-col>
-              
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="editedLesson.room"
-                  :items="roomsWithLabels"
-                  item-title="roomLabel"
-                  item-value="id"
-                  label="Sala"
-                  variant="outlined"
-                  required
-                  return-object
-                ></v-select>
-              </v-col>
-              
-              <v-col cols="12">
-                <v-select
-                  v-model="editedLesson.lecturer"
-                  :items="lecturers"
-                  item-title="name"
-                  item-value="id"
-                  label="Wykładowca"
-                  variant="outlined"
-                  required
-                  return-object
-                ></v-select>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn variant="text" @click="closeDialog">Anuluj</v-btn>
-          <v-btn color="primary" @click="saveLesson">Zapisz</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <lesson-dialog
+      v-model="showAddDialog"
+      :lesson="editedLesson"
+      @save="onLessonSaved"
+      @close="closeDialog"
+    />
 
     <!-- Dialog potwierdzenia usunięcia -->
     <v-dialog v-model="showDeleteDialog" max-width="400px">
@@ -359,18 +204,24 @@
 import { useLessonsStore } from '@/stores/lessons'
 import { useGroupsStore } from '@/stores/groups'
 import { useProgramsStore } from '@/stores/programs'
+import { useSubjectsStore } from '@/stores/subjects'
 import { useUsersStore } from '@/stores/users'
 import { useRoomsStore } from '@/stores/rooms'
+import LessonDialog from '@/components/schedule/LessonDialog.vue'
 
 export default {
   name: 'Lessons',
+  components: {
+    LessonDialog
+  },
   setup() {
     const lessonsStore = useLessonsStore()
     const groupsStore = useGroupsStore()
     const programsStore = useProgramsStore()
+    const subjectsStore = useSubjectsStore()
     const usersStore = useUsersStore()
     const roomsStore = useRoomsStore()
-    return { lessonsStore, groupsStore, programsStore, usersStore, roomsStore }
+    return { lessonsStore, groupsStore, programsStore, subjectsStore, usersStore, roomsStore }
   },
   data() {
     return {
@@ -380,12 +231,8 @@ export default {
       dateTo: null,
       showAddDialog: false,
       showDeleteDialog: false,
-      editedLesson: {},
+      editedLesson: null,
       lessonToDelete: null,
-      editedLessonStartDate: null,
-      editedLessonStartTime: null,
-      editedLessonEndDate: null,
-      editedLessonEndTime: null,
       lessonTypes: [
         { title: 'Wykład', value: 'lecture' },
         { title: 'Laboratorium', value: 'lab' },
@@ -452,9 +299,9 @@ export default {
       ]
     },
     lecturers() {
-      return this.usersStore.getUsersByRole('teacher').map(user => ({
+      return this.usersStore.getUsersByRole('lecturer').map(user => ({
         id: user.id,
-        name: `${user.first_name} ${user.last_name}`,
+        name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
         email: user.email
       }))
     },
@@ -475,77 +322,14 @@ export default {
     updateDateTo() {
       // Date picker callback  
     },
-    formatDateTimeDisplay(dateTime) {
-      if (!dateTime) return ''
-      const date = new Date(dateTime)
-      return date.toLocaleString('pl-PL', {
-        year: 'numeric',
-        month: '2-digit', 
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-    updateStartDateTime() {
-      if (this.editedLessonStartDate && this.editedLessonStartTime) {
-        const date = new Date(this.editedLessonStartDate)
-        const [hours, minutes] = this.editedLessonStartTime.split(':')
-        date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-        this.editedLesson.starts_at = date.toISOString()
-        
-        if (!this.editedLesson.ends_at) {
-          const endDate = new Date(date)
-          endDate.setMinutes(endDate.getMinutes() + 90)
-          this.editedLesson.ends_at = endDate.toISOString()
-          this.editedLessonEndDate = endDate
-          this.editedLessonEndTime = endDate.toTimeString().slice(0, 5)
-        }
-      }
-    },
-    updateEndDateTime() {
-      if (this.editedLessonEndDate && this.editedLessonEndTime) {
-        const date = new Date(this.editedLessonEndDate)
-        const [hours, minutes] = this.editedLessonEndTime.split(':')
-        date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-        this.editedLesson.ends_at = date.toISOString()
-      }
-    },
+    
     initNewLesson() {
-      const tomorrow = new Date()
-      tomorrow.setDate(tomorrow.getDate() + 1)
-      tomorrow.setHours(8, 0, 0, 0)
-      
-      const endTime = new Date(tomorrow)
-      endTime.setHours(9, 30, 0, 0)
-      
-      this.editedLesson = {
-        starts_at: tomorrow.toISOString(),
-        ends_at: endTime.toISOString(),
-        status: 'scheduled',
-        lesson_type: 'lecture'
-      }
-      
-      this.editedLessonStartDate = tomorrow
-      this.editedLessonStartTime = '08:00'
-      this.editedLessonEndDate = endTime
-      this.editedLessonEndTime = '09:30'
-      
+      this.editedLesson = null
       this.showAddDialog = true
     },
     
     editLesson(lesson) {
-      this.editedLesson = { ...lesson }
-      // Setup date/time pickers
-      if (lesson.starts_at) {
-        const startDate = new Date(lesson.starts_at)
-        this.editedLessonStartDate = startDate
-        this.editedLessonStartTime = startDate.toTimeString().slice(0, 5)
-      }
-      if (lesson.ends_at) {
-        const endDate = new Date(lesson.ends_at)
-        this.editedLessonEndDate = endDate
-        this.editedLessonEndTime = endDate.toTimeString().slice(0, 5)
-      }
+      this.editedLesson = lesson
       this.showAddDialog = true
     },
     
@@ -562,25 +346,14 @@ export default {
       }
     },
     
-    saveLesson() {
-      // Use the already converted ISO strings
-      const lessonData = { ...this.editedLesson }
-      
-      if (this.editedLesson.id) {
-        this.lessonsStore.updateLesson(this.editedLesson.id, lessonData)
-      } else {
-        this.lessonsStore.addLesson(lessonData)
-      }
+    onLessonSaved() {
+      this.lessonsStore.fetchLessons()
       this.closeDialog()
     },
     
     closeDialog() {
       this.showAddDialog = false
-      this.editedLesson = {}
-      this.editedLessonStartDate = null
-      this.editedLessonStartTime = null
-      this.editedLessonEndDate = null
-      this.editedLessonEndTime = null
+      this.editedLesson = null
     },
     
     formatDate(dateString) {
@@ -592,16 +365,6 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       })
-    },
-    
-    formatDateTimeLocal(dateString) {
-      const date = new Date(dateString)
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      return `${year}-${month}-${day}T${hours}:${minutes}`
     },
     
     getStatusColor(status) {
@@ -637,6 +400,7 @@ export default {
     this.lessonsStore.fetchLessons()
     this.groupsStore.fetchGroups()
     this.programsStore.fetchPrograms()
+    this.subjectsStore.fetchSubjects()
     this.usersStore.fetchUsers()
     this.roomsStore.fetchRooms()
   }

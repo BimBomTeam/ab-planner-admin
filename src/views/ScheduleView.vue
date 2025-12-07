@@ -3,7 +3,7 @@
     <div class="d-flex justify-space-between align-center mb-4">
       <h1 class="text-h4">Plan Lekcji</h1>
       
-      <v-btn color="primary" @click="showAddDialog = true" :disabled="!canAddLesson">
+      <v-btn color="primary" @click="openAddDialog" :disabled="!canAddLesson">
         <v-icon class="mr-2">mdi-plus</v-icon>
         Dodaj zajęcia
       </v-btn>
@@ -92,6 +92,12 @@ export default {
         showAddDialog.value = true
     }
 
+    const openAddDialog = () => {
+        selectedLesson.value = null
+        selectedDate.value = null
+        showAddDialog.value = true
+    }
+
     const closeDialog = () => {
         showAddDialog.value = false
         selectedLesson.value = null
@@ -117,6 +123,7 @@ export default {
       handleFilterChange,
       editLesson,
       handleSlotSelect,
+      openAddDialog,
       closeDialog,
       refreshLessons
     }

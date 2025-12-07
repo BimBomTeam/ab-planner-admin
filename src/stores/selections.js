@@ -1,33 +1,13 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+
+const API_URL = '/api/v1'
 
 export const useSelectionsStore = defineStore('selections', {
   state: () => ({
-    selections: [
-      {
-        id: 1,
-        user_id: 3,
-        group_id: 1,
-        selected_at: '2025-11-10T10:00:00Z'
-      },
-      {
-        id: 2,
-        user_id: 3,
-        group_id: 2,
-        selected_at: '2025-11-10T10:05:00Z'
-      },
-      {
-        id: 3,
-        user_id: 4,
-        group_id: 1,
-        selected_at: '2025-11-11T14:30:00Z'
-      },
-      {
-        id: 4,
-        user_id: 4,
-        group_id: 3,
-        selected_at: '2025-11-12T09:15:00Z'
-      }
-    ]
+    selections: [],
+    loading: false,
+    error: null
   }),
   
   getters: {
@@ -48,35 +28,73 @@ export const useSelectionsStore = defineStore('selections', {
   },
   
   actions: {
-    addSelection(selection) {
-      // Check if user is already in this group
-      const existing = this.selections.find(s => 
-        s.user_id === selection.user_id && s.group_id === selection.group_id
-      )
-      
-      if (!existing) {
-        const id = Math.max(...this.selections.map(s => s.id)) + 1
-        this.selections.push({
-          ...selection,
-          id,
-          selected_at: new Date().toISOString()
+    async fetchSelections() {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await axios.get(`${API_URL}/student-group-selection`)
+        this.selections = response.data
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się pobrać wyborów'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async addSelection(selectionData) {
+      this.loading = true
+      this.error = null
+      try {
+        const payload = {
+            user_id: parseInt(selectionData.user_id),
+            group_id: parseInt(selectionData.group_id)
+        }
+        // API uses PUT for upsert
+        const response = await axios.put(`${API_URL}/student-group-selection`, payload)
+        
+        // The API returns the created/updated selection object
+        // We should check if it already exists in our list to update or push
+        const index = this.selections.findIndex(s => s.id === response.data.id)
+        if (index !== -1) {
+            this.selections[index] = response.data
+        } else {
+            this.selections.push(response.data)
+        }
+        
+        return response.data
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się dodać wyboru'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    async deleteSelection(id) {
+      this.loading = true
+      this.error = null
+      try {
+        const selection = this.getSelectionById(id)
+        if (!selection) {
+            throw new Error('Selection not found locally')
+        }
+
+        // API uses DELETE with query params, not ID
+        await axios.delete(`${API_URL}/student-group-selection`, {
+            params: {
+                user_id: selection.user_id,
+                group_id: selection.group_id
+            }
         })
-      }
-    },
-    
-    removeSelection(userId, groupId) {
-      const index = this.selections.findIndex(selection => 
-        selection.user_id === userId && selection.group_id === groupId
-      )
-      if (index !== -1) {
-        this.selections.splice(index, 1)
-      }
-    },
-    
-    deleteSelection(id) {
-      const index = this.selections.findIndex(selection => selection.id === id)
-      if (index !== -1) {
-        this.selections.splice(index, 1)
+        
+        this.selections = this.selections.filter(s => s.id !== id)
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Nie udało się usunąć wyboru'
+        throw error
+      } finally {
+        this.loading = false
       }
     }
   }

@@ -57,6 +57,7 @@
         :items="filteredGroups"
         :search="search"
         item-value="id"
+        no-data-text="Brak danych"
       >
         <template #item.program="{ item }">
           <v-chip
@@ -94,7 +95,7 @@
             size="small"
             variant="outlined"
           >
-            {{ item.group_type.label }}
+            {{ getGroupTypeLabel(item.group_type.code) }}
           </v-chip>
         </template>
         
@@ -293,6 +294,15 @@ export default {
   methods: {
     editGroup(group) {
       this.editedGroup = { ...group }
+      
+      // Map group_type to the object from store to ensure correct label display in select
+      if (this.editedGroup.group_type && this.editedGroup.group_type.code) {
+        const storeType = this.groupsStore.groupTypes.find(t => t.code === this.editedGroup.group_type.code)
+        if (storeType) {
+          this.editedGroup.group_type = storeType
+        }
+      }
+      
       this.showAddDialog = true
     },
     
@@ -345,6 +355,11 @@ export default {
         case 'project': return 'purple'
         default: return 'grey'
       }
+    },
+
+    getGroupTypeLabel(code) {
+      const type = this.groupsStore.groupTypes.find(t => t.code === code)
+      return type ? type.label : code
     }
   },
   mounted() {

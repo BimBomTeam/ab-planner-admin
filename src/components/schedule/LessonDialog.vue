@@ -1,191 +1,199 @@
 <template>
-  <v-dialog v-model="dialog" max-width="600px">
+  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="800px">
     <v-card>
-      <v-card-title class="pa-4 bg-primary text-white">
-        <span class="text-h5">{{ isEditing ? 'Edytuj zajęcia' : 'Dodaj zajęcia' }}</span>
+      <v-card-title class="pa-6 pb-4">
+        <span class="text-h5">{{ editedLesson.id ? 'Edytuj' : 'Dodaj' }} zajęcia</span>
       </v-card-title>
-
-      <v-card-text class="pt-4">
-        <v-form ref="form" v-model="valid">
-          <v-container>
-            <v-row>
-              <!-- Subject -->
-              <v-col cols="12">
-                <v-select
-                  v-model="formData.subject_id"
-                  :items="subjectsStore.subjects"
-                  item-title="name"
-                  item-value="id"
-                  label="Przedmiot"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Przedmiot jest wymagany']"
-                  required
-                ></v-select>
-              </v-col>
-
-              <!-- Group -->
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="formData.group_id"
-                  :items="groupsStore.groups"
-                  item-title="code"
-                  item-value="id"
-                  label="Grupa"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Grupa jest wymagana']"
-                  required
-                ></v-select>
-              </v-col>
-
-              <!-- Room -->
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="formData.room_id"
-                  :items="roomsStore.rooms"
-                  item-title="number"
-                  item-value="id"
-                  label="Sala"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Sala jest wymagana']"
-                  required
-                >
-                   <template v-slot:item="{ props, item }">
-                    <v-list-item v-bind="props" :title="item.raw.number" :subtitle="`Budynek: ${item.raw.building} (Poj: ${item.raw.capacity})`"></v-list-item>
-                   </template>
-                </v-select>
-              </v-col>
-
-              <!-- Lecturer -->
-              <v-col cols="12">
-                <v-select
-                  v-model="formData.lecturer_user_id"
-                  :items="teachers"
-                  item-title="last_name"
-                  item-value="id"
-                  label="Wykładowca"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Wykładowca jest wymagany']"
-                  :disabled="isTeacher"
-                  required
-                >
-                  <template v-slot:selection="{ item }">
-                    {{ item.raw.first_name }} {{ item.raw.last_name }}
-                  </template>
-                  <template v-slot:item="{ props, item }">
-                    <v-list-item v-bind="props" :title="`${item.raw.first_name} ${item.raw.last_name}`"></v-list-item>
-                  </template>
-                </v-select>
-              </v-col>
-
-              <!-- Date & Time -->
-              <v-col cols="12" md="6">
-                <v-date-input
-                    v-model="date"
-                    label="Data"
+      
+      <v-card-text>
+        <v-container>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="editedLesson.subject"
+                :items="subjectsStore.subjects"
+                item-title="name"
+                item-value="id"
+                label="Przedmiot"
+                variant="outlined"
+                required
+                return-object
+              ></v-select>
+            </v-col>
+            
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="editedLesson.group"
+                :items="groupsStore.groups"
+                item-title="code"
+                item-value="id"
+                label="Grupa"
+                variant="outlined"
+                required
+                return-object
+              ></v-select>
+            </v-col>
+            
+            <v-col cols="12" md="6">
+              <v-menu
+                v-model="menuStart"
+                :close-on-content-click="false"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    :model-value="formatDateTimeDisplay(editedLesson.starts_at)"
+                    label="Początek zajęć"
                     variant="outlined"
-                    prepend-icon=""
-                ></v-date-input>
-              </v-col>
-              
-               <!-- Using text fields for time for simplicity, ideally time picker -->
-              <v-col cols="6" md="3">
-                <v-text-field
-                  v-model="startTime"
-                  label="Od"
-                  type="time"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Wymagane']"
-                ></v-text-field>
-              </v-col>
-              <v-col cols="6" md="3">
-                <v-text-field
-                  v-model="endTime"
-                  label="Do"
-                  type="time"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Wymagane']"
-                ></v-text-field>
-              </v-col>
-              
-              <!-- Type & Status -->
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="formData.lesson_type"
-                  :items="lessonsStore.lessonTypes"
-                  item-title="label"
-                  item-value="value"
-                  label="Typ zajęć"
-                  variant="outlined"
-                  required
-                ></v-select>
-              </v-col>
+                    required
+                    prepend-inner-icon="mdi-calendar-clock"
+                    readonly
+                  ></v-text-field>
+                </template>
+                <v-card>
+                  <v-card-text>
+                    <v-date-picker
+                      v-model="editedLessonStartDate"
+                      locale="pl"
+                      show-adjacent-months
+                    ></v-date-picker>
+                    <v-time-picker
+                      v-model="editedLessonStartTime"
+                      format="24hr"
+                      class="mt-4"
+                    ></v-time-picker>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="updateStartDateTime">OK</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-menu>
+            </v-col>
+            
+            <v-col cols="12" md="6">
+              <v-menu
+                v-model="menuEnd"
+                :close-on-content-click="false"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    :model-value="formatDateTimeDisplay(editedLesson.ends_at)"
+                    label="Koniec zajęć"
+                    variant="outlined"
+                    required
+                    prepend-inner-icon="mdi-calendar-clock"
+                    readonly
+                  ></v-text-field>
+                </template>
+                <v-card>
+                  <v-card-text>
+                    <v-date-picker
+                      v-model="editedLessonEndDate"
+                      locale="pl"
+                      show-adjacent-months
+                    ></v-date-picker>
+                    <v-time-picker
+                      v-model="editedLessonEndTime"
+                      format="24hr"
+                      class="mt-4"
+                    ></v-time-picker>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn @click="updateEndDateTime">OK</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-menu>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-select
+                v-model="editedLesson.lesson_type"
+                :items="lessonTypes"
+                label="Typ zajęć"
+                variant="outlined"
+                required
+              ></v-select>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-select
+                v-model="editedLesson.status"
+                :items="lessonsStore.lessonStatuses"
+                item-title="label"
+                item-value="value"
+                label="Status"
+                variant="outlined"
+                required
+              ></v-select>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-select
+                v-model="editedLesson.room"
+                :items="roomsWithLabels"
+                item-title="roomLabel"
+                item-value="id"
+                label="Sala"
+                variant="outlined"
+                required
+                return-object
+              ></v-select>
+            </v-col>
+            
+            <v-col cols="12">
+              <v-select
+                v-model="editedLesson.lecturer"
+                :items="lecturers"
+                item-title="name"
+                item-value="id"
+                label="Wykładowca"
+                variant="outlined"
+                required
+                return-object
+              ></v-select>
+            </v-col>
 
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="formData.status"
-                  :items="lessonsStore.lessonStatuses"
-                  item-title="label"
-                  item-value="value"
-                  label="Status"
-                  variant="outlined"
-                  required
-                ></v-select>
-              </v-col>
-              
-              <!-- Series Options (Only for new) -->
-              <v-col cols="12" v-if="!isEditing">
-                <v-checkbox
-                    v-model="isSeries"
-                    label="Utwórz serię (powtarzalne zajęcia)"
-                    density="compact"
-                    hide-details
-                ></v-checkbox>
-              </v-col>
-              
-              <v-col cols="12" md="6" v-if="!isEditing && isSeries">
-                 <v-text-field
-                    v-model.number="seriesData.occurrences"
-                    label="Liczba spotkań"
-                    type="number"
-                    variant="outlined"
-                    min="2"
-                    max="52"
-                 ></v-text-field>
-              </v-col>
-               <v-col cols="12" md="6" v-if="!isEditing && isSeries">
-                 <v-text-field
-                    v-model.number="seriesData.repeat_every_days"
-                    label="Co ile dni"
-                    type="number"
-                    variant="outlined"
-                    min="1"
-                 ></v-text-field>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-form>
+            <!-- Recurrence Options -->
+            <v-col cols="12" v-if="!editedLesson.id">
+              <v-checkbox
+                v-model="isRecurring"
+                label="Powtarzaj zajęcia (seria)"
+                hide-details
+              ></v-checkbox>
+            </v-col>
+
+            <v-col cols="12" md="6" v-if="isRecurring && !editedLesson.id">
+              <v-text-field
+                v-model.number="repeatEveryDays"
+                label="Powtarzaj co (dni)"
+                type="number"
+                min="1"
+                variant="outlined"
+                required
+              ></v-text-field>
+            </v-col>
+
+            <v-col cols="12" md="6" v-if="isRecurring && !editedLesson.id">
+              <v-text-field
+                v-model.number="occurrences"
+                label="Liczba powtórzeń"
+                type="number"
+                min="1"
+                variant="outlined"
+                required
+              ></v-text-field>
+            </v-col>
+          </v-row>
+        </v-container>
       </v-card-text>
-
-      <v-card-actions class="pa-4">
-        <v-btn
-          v-if="isEditing"
-          color="error"
-          variant="text"
-          prepend-icon="mdi-delete"
-          @click="deleteLesson"
-        >
-          Usuń
-        </v-btn>
+      
+      <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn variant="text" @click="close">Anuluj</v-btn>
-        <v-btn
-          color="primary"
-          @click="save"
-          :loading="saving"
-          :disabled="!valid"
-        >
-          Zapisz
-        </v-btn>
+        <v-btn variant="text" @click="closeDialog">Anuluj</v-btn>
+        <v-btn color="primary" @click="saveLesson">Zapisz</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -194,11 +202,11 @@
 <script>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useLessonsStore } from '@/stores/lessons'
-import { useSubjectsStore } from '@/stores/subjects'
-import { useRoomsStore } from '@/stores/rooms'
 import { useGroupsStore } from '@/stores/groups'
+import { useProgramsStore } from '@/stores/programs'
+import { useSubjectsStore } from '@/stores/subjects'
 import { useUsersStore } from '@/stores/users'
-import { useAuthStore } from '@/stores/auth'
+import { useRoomsStore } from '@/stores/rooms'
 
 export default {
   name: 'LessonDialog',
@@ -210,190 +218,226 @@ export default {
   emits: ['update:modelValue', 'save', 'close'],
   setup(props, { emit }) {
     const lessonsStore = useLessonsStore()
-    const subjectsStore = useSubjectsStore()
-    const roomsStore = useRoomsStore()
     const groupsStore = useGroupsStore()
+    const programsStore = useProgramsStore()
+    const subjectsStore = useSubjectsStore()
     const usersStore = useUsersStore()
-    const authStore = useAuthStore()
+    const roomsStore = useRoomsStore()
 
-    const form = ref(null)
-    const valid = ref(false)
-    const saving = ref(false)
-
-    // Form State
-    const date = ref(new Date())
-    const startTime = ref('08:00')
-    const endTime = ref('09:30')
+    const editedLesson = ref({})
+    const editedLessonStartDate = ref(null)
+    const editedLessonStartTime = ref(null)
+    const editedLessonEndDate = ref(null)
+    const editedLessonEndTime = ref(null)
     
-    // Default form data
-    const defaultData = {
-        subject_id: null,
-        group_id: null,
-        room_id: null,
-        lecturer_user_id: null,
+    const menuStart = ref(false)
+    const menuEnd = ref(false)
+
+    // Recurrence fields
+    const isRecurring = ref(false)
+    const repeatEveryDays = ref(7)
+    const occurrences = ref(1)
+
+    const lessonTypes = [
+      { title: 'Wykład', value: 'lecture' },
+      { title: 'Laboratorium', value: 'lab' },
+      { title: 'Seminarium', value: 'seminar' },
+      { title: 'Projekt', value: 'project' }
+    ]
+
+    const lecturers = computed(() => {
+      return usersStore.getUsersByRole('lecturer').map(user => ({
+        id: user.id,
+        name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+        email: user.email
+      }))
+    })
+
+    const roomsWithLabels = computed(() => {
+      return roomsStore.rooms.map(room => ({
+        id: room.id,
+        number: room.number,
+        building: room.building,
+        capacity: room.capacity,
+        roomLabel: `${room.building || 'N/A'}/${room.number || 'N/A'} (${room.capacity || 0} miejsc)`
+      }))
+    })
+
+    const formatDateTimeDisplay = (dateTime) => {
+      if (!dateTime) return ''
+      const date = new Date(dateTime)
+      return date.toLocaleString('pl-PL', {
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+
+    const updateStartDateTime = () => {
+      if (editedLessonStartDate.value && editedLessonStartTime.value) {
+        const date = new Date(editedLessonStartDate.value)
+        const [hours, minutes] = editedLessonStartTime.value.split(':')
+        date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+        editedLesson.value.starts_at = date.toISOString()
+        
+        if (!editedLesson.value.ends_at) {
+          const endDate = new Date(date)
+          endDate.setMinutes(endDate.getMinutes() + 90)
+          editedLesson.value.ends_at = endDate.toISOString()
+          editedLessonEndDate.value = endDate
+          editedLessonEndTime.value = endDate.toTimeString().slice(0, 5)
+        }
+        menuStart.value = false
+      }
+    }
+
+    const updateEndDateTime = () => {
+      if (editedLessonEndDate.value && editedLessonEndTime.value) {
+        const date = new Date(editedLessonEndDate.value)
+        const [hours, minutes] = editedLessonEndTime.value.split(':')
+        date.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+        editedLesson.value.ends_at = date.toISOString()
+        menuEnd.value = false
+      }
+    }
+
+    const initNewLesson = () => {
+      const tomorrow = props.initialDate ? new Date(props.initialDate) : new Date()
+      if (!props.initialDate) {
+          tomorrow.setDate(tomorrow.getDate() + 1)
+      }
+      tomorrow.setHours(8, 0, 0, 0)
+      
+      const endTime = new Date(tomorrow)
+      endTime.setHours(9, 30, 0, 0)
+      
+      editedLesson.value = {
+        starts_at: tomorrow.toISOString(),
+        ends_at: endTime.toISOString(),
         status: 'scheduled',
         lesson_type: 'lecture'
+      }
+      
+      editedLessonStartDate.value = tomorrow
+      editedLessonStartTime.value = '08:00'
+      editedLessonEndDate.value = endTime
+      editedLessonEndTime.value = '09:30'
+      
+      // Reset recurrence
+      isRecurring.value = false
+      repeatEveryDays.value = 7
+      occurrences.value = 1
     }
-    
-    const formData = ref({ ...defaultData })
-    
-    // Series State
-    const isSeries = ref(false)
-    const seriesData = ref({
-        occurrences: 15, // Semester default roughly
-        repeat_every_days: 7 // Weekly
-    })
 
-    const isEditing = computed(() => !!props.lesson)
-    const isTeacher = computed(() => authStore.isTeacher)
-    const teachers = computed(() => usersStore.teacherUsers)
-    
-    // Dialog Model
-    const dialog = computed({
-      get: () => props.modelValue,
-      set: (val) => emit('update:modelValue', val)
-    })
+    const initEditLesson = (lesson) => {
+      editedLesson.value = { ...lesson }
+      
+      // Reset recurrence (editing series not supported in this simple view yet)
+      isRecurring.value = false
+      repeatEveryDays.value = 7
+      occurrences.value = 1
+      
+      // Fix room object
+      if (editedLesson.value.room) {
+        const matchingRoom = roomsWithLabels.value.find(r => r.id === editedLesson.value.room.id)
+        if (matchingRoom) {
+          editedLesson.value.room = matchingRoom
+        }
+      }
 
-    // Watchers to populate form
+      if (lesson.starts_at) {
+        const startDate = new Date(lesson.starts_at)
+        editedLessonStartDate.value = startDate
+        editedLessonStartTime.value = startDate.toTimeString().slice(0, 5)
+      }
+      if (lesson.ends_at) {
+        const endDate = new Date(lesson.ends_at)
+        editedLessonEndDate.value = endDate
+        editedLessonEndTime.value = endDate.toTimeString().slice(0, 5)
+      }
+    }
+
     watch(() => props.modelValue, (val) => {
       if (val) {
+        // Fetch data when dialog opens
+        subjectsStore.fetchSubjects()
+        groupsStore.fetchGroups()
+        usersStore.fetchUsers()
+        roomsStore.fetchRooms()
+        
         if (props.lesson) {
-            // Edit Mode
-            const l = props.lesson
-            formData.value = {
-                subject_id: l.subject.id,
-                group_id: l.group.id,
-                room_id: l.room.id,
-                lecturer_user_id: l.lecturer.id,
-                status: l.status,
-                lesson_type: l.lesson_type
-            }
-            
-            const start = new Date(l.starts_at)
-            const end = new Date(l.ends_at)
-            date.value = start
-            startTime.value = start.toTimeString().slice(0, 5)
-            endTime.value = end.toTimeString().slice(0, 5)
-            
-            isSeries.value = false
+          initEditLesson(props.lesson)
         } else {
-            // Create Mode
-            formData.value = { ...defaultData }
-            
-            // If user is teacher, auto-select them
-            if (isTeacher.value) {
-                formData.value.lecturer_user_id = authStore.user.id
-            }
-            
-            if (props.initialDate) {
-                date.value = props.initialDate
-                // Default start time is often current hour or 8:00
-                const h = props.initialDate.getHours()
-                // If clicked on day (00:00), default to 8:00
-                if (h === 0) {
-                     startTime.value = '08:00'
-                     endTime.value = '09:30'
-                } else {
-                     startTime.value = `${String(h).padStart(2, '0')}:00`
-                     endTime.value = `${String(h+1).padStart(2, '0')}:30`
-                }
-            } else {
-                 date.value = new Date()
-            }
+          initNewLesson()
         }
       }
     })
 
-    const close = () => {
+    const closeDialog = () => {
+      emit('update:modelValue', false)
       emit('close')
     }
 
-    const save = async () => {
-       if (!valid.value) return
-       saving.value = true
-       
-       try {
-           // Combine date and time
-           const d = new Date(date.value)
-           const dateStr = d.toISOString().split('T')[0]
-           
-           const starts_at = `${dateStr}T${startTime.value}:00Z` // Assuming local for now, but API might want ISO
-           // Actually, better to construct proper Date objects and then ISO string
-           // But naive approach:
-           const startD = new Date(`${dateStr}T${startTime.value}`)
-           const endD = new Date(`${dateStr}T${endTime.value}`)
-           
-           const data = {
-               ...formData.value,
-               starts_at: startD.toISOString(),
-               ends_at: endD.toISOString()
-           }
-           
-           if (isEditing.value) {
-               await lessonsStore.updateLesson(props.lesson.id, data)
-           } else {
-               if (isSeries.value) {
-                   await lessonsStore.createLessonSeries({
-                       lesson: data,
-                       repeat_every_days: seriesData.value.repeat_every_days,
-                       occurrences: seriesData.value.occurrences
-                   })
-               } else {
-                   await lessonsStore.createLesson(data)
-               }
-           }
-           emit('save')
-       } catch (e) {
-           console.error(e)
-           // ideally show snackbar
-       } finally {
-           saving.value = false
-       }
-    }
-    
-    const deleteLesson = async () => {
-        if (!confirm('Czy na pewno chcesz usunąć te zajęcia?')) return
-        saving.value = true
-        try {
-            await lessonsStore.deleteLesson(props.lesson.id)
-            emit('save')
-        } catch (e) {
-            console.error(e)
-        } finally {
-            saving.value = false
+    const saveLesson = async () => {
+      const payload = {
+        ...editedLesson.value,
+        subject_id: editedLesson.value.subject?.id,
+        group_id: editedLesson.value.group?.id,
+        room_id: editedLesson.value.room?.id,
+        lecturer_user_id: editedLesson.value.lecturer?.id
+      }
+      
+      delete payload.subject
+      delete payload.group
+      delete payload.room
+      delete payload.lecturer
+      
+      try {
+        if (editedLesson.value.id) {
+            await lessonsStore.updateLesson(editedLesson.value.id, payload)
+        } else {
+            if (isRecurring.value) {
+                const seriesPayload = {
+                    lesson: payload,
+                    repeat_every_days: repeatEveryDays.value,
+                    occurrences: occurrences.value
+                }
+                await lessonsStore.createLessonSeries(seriesPayload)
+            } else {
+                await lessonsStore.createLesson(payload)
+            }
         }
+        emit('save')
+        closeDialog()
+      } catch (e) {
+          console.error(e)
+      }
     }
-
-    onMounted(async () => {
-        // Ensure data is loaded
-        if (subjectsStore.subjects.length === 0) await subjectsStore.fetchSubjects()
-        if (roomsStore.rooms.length === 0) await roomsStore.fetchRooms()
-        if (groupsStore.groups.length === 0) await groupsStore.fetchGroups()
-        if (usersStore.users.length === 0) await usersStore.fetchUsers() // Need teachers
-    })
 
     return {
-      dialog,
-      form,
-      valid,
-      saving,
-      formData,
-      date,
-      startTime,
-      endTime,
-      isEditing,
-      isTeacher,
-      teachers,
-      lessonsStore,
+      editedLesson,
+      editedLessonStartDate,
+      editedLessonStartTime,
+      editedLessonEndDate,
+      editedLessonEndTime,
+      menuStart,
+      menuEnd,
+      isRecurring,
+      repeatEveryDays,
+      occurrences,
+      lessonTypes,
+      lecturers,
+      roomsWithLabels,
       subjectsStore,
-      roomsStore,
       groupsStore,
-      usersStore,
-      isSeries,
-      seriesData,
-      close,
-      save,
-      deleteLesson
+      lessonsStore,
+      formatDateTimeDisplay,
+      updateStartDateTime,
+      updateEndDateTime,
+      closeDialog,
+      saveLesson
     }
   }
 }
