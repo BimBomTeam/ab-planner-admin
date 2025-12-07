@@ -236,7 +236,12 @@ export default {
       showDeleteDialog: false,
       programToDelete: null,
       newYear: null,
-      newSpecialization: ''
+      newSpecialization: '',
+      editedProgram: {
+        name: '',
+        years: [],
+        specializations: []
+      }
     }
   },
   
@@ -270,13 +275,18 @@ export default {
       }
     },
     
-    saveProgram() {
-      if (this.editedProgram.id) {
-        this.programsStore.updateProgram(this.editedProgram.id, this.editedProgram)
-      } else {
-        this.programsStore.addProgram(this.editedProgram)
+    async saveProgram() {
+      try {
+        if (this.editedProgram.id) {
+          await this.programsStore.updateProgram(this.editedProgram.id, this.editedProgram)
+        } else {
+          await this.programsStore.addProgram(this.editedProgram)
+        }
+        this.closeDialog()
+      } catch (error) {
+        console.error('Failed to save program:', error)
+        // Optionally show error notification
       }
-      this.closeDialog()
     },
     
     closeDialog() {
@@ -291,49 +301,64 @@ export default {
     },
 
     async addYear() {
-        if (this.newYear && this.editedProgram.id) {
+        if (!this.newYear) return
+
+        if (this.editedProgram.id) {
             await this.programsStore.addYear(this.editedProgram.id, this.newYear)
-            // Refresh local data from store after update
-            // Ideally we should just use the store data directly in the loop, 
-            // but the dialog uses a copy 'editedProgram'. 
-            // We need to re-sync editedProgram or close/re-open.
-            // For simplicity, let's close and re-open or just fetch fresh data.
             const updated = this.programsStore.getProgramById(this.editedProgram.id)
             if (updated) {
                 this.editedProgram.years = [...updated.years]
             }
-            this.newYear = null
+        } else {
+            // Local add for new program
+            this.editedProgram.years.push({ year: this.newYear, id: Date.now() })
         }
+        this.newYear = null
     },
 
     async removeYear(yearId) {
-        if (confirm('Czy na pewno chcesz usunąć ten rok?') && this.editedProgram.id) {
-            await this.programsStore.deleteYear(yearId)
-             const updated = this.programsStore.getProgramById(this.editedProgram.id)
-            if (updated) {
-                this.editedProgram.years = [...updated.years]
+        if (this.editedProgram.id) {
+            if (confirm('Czy na pewno chcesz usunąć ten rok?')) {
+                await this.programsStore.deleteYear(yearId)
+                const updated = this.programsStore.getProgramById(this.editedProgram.id)
+                if (updated) {
+                    this.editedProgram.years = [...updated.years]
+                }
             }
+        } else {
+            // Local remove
+            this.editedProgram.years = this.editedProgram.years.filter(y => y.id !== yearId)
         }
     },
 
     async addSpecialization() {
-         if (this.newSpecialization && this.editedProgram.id) {
+         if (!this.newSpecialization) return
+
+         if (this.editedProgram.id) {
             await this.programsStore.addSpecialization(this.editedProgram.id, this.newSpecialization)
             const updated = this.programsStore.getProgramById(this.editedProgram.id)
             if (updated) {
                 this.editedProgram.specializations = [...updated.specializations]
             }
-            this.newSpecialization = ''
+        } else {
+            // Local add
+            this.editedProgram.specializations.push({ name: this.newSpecialization, id: Date.now() })
         }
+        this.newSpecialization = ''
     },
 
     async removeSpecialization(specId) {
-        if (confirm('Czy na pewno chcesz usunąć tę specjalizację?') && this.editedProgram.id) {
-            await this.programsStore.deleteSpecialization(specId)
-            const updated = this.programsStore.getProgramById(this.editedProgram.id)
-            if (updated) {
-                this.editedProgram.specializations = [...updated.specializations]
+        if (this.editedProgram.id) {
+            if (confirm('Czy na pewno chcesz usunąć tę specjalizację?')) {
+                await this.programsStore.deleteSpecialization(specId)
+                const updated = this.programsStore.getProgramById(this.editedProgram.id)
+                if (updated) {
+                    this.editedProgram.specializations = [...updated.specializations]
+                }
             }
+        } else {
+            // Local remove
+            this.editedProgram.specializations = this.editedProgram.specializations.filter(s => s.id !== specId)
         }
     }
   },

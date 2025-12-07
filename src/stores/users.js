@@ -11,7 +11,7 @@ export const useUsersStore = defineStore('users', {
     error: null,
     roles: [
       { id: 1, code: 'student', label: 'Student' },
-      { id: 2, code: 'teacher', label: 'Wykładowca' },
+      { id: 2, code: 'lecturer', label: 'Wykładowca' },
       { id: 3, code: 'admin', label: 'Administrator' }
     ]
   }),
@@ -23,7 +23,7 @@ export const useUsersStore = defineStore('users', {
     // Note: Backend might not return these flags directly, but we can infer or filter based on role object
     studentUsers: (state) => state.users.filter(user => user.role.code === 'student'),
     
-    teacherUsers: (state) => state.users.filter(user => user.role.code === 'teacher'),
+    teacherUsers: (state) => state.users.filter(user => user.role.code === 'lecturer'),
     
     adminUsers: (state) => state.users.filter(user => user.role.code === 'admin'),
     

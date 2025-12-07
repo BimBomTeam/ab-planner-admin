@@ -52,7 +52,7 @@ export const useAuthStore = defineStore('auth', {
         userRole: (state) => state.user?.role?.code || null,
         
         isAdmin: (state) => state.user?.role?.code === 'admin',
-        isTeacher: (state) => state.user?.role?.code === 'teacher',
+        isTeacher: (state) => state.user?.role?.code === 'lecturer',
         isStudent: (state) => state.user?.role?.code === 'student'
     },
 

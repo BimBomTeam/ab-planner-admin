@@ -42,25 +42,20 @@
         :items="filteredUsers"
         :search="search"
         item-value="id"
+        no-data-text="Brak danych"
       >
         <template #item.role="{ item }">
           <v-chip
-            :color="getRoleColor(item.role)"
+            :color="getRoleColor(item.role?.code)"
             size="small"
             variant="tonal"
           >
-            {{ getRoleLabel(item.role) }}
+            {{ getRoleLabel(item.role?.code) }}
           </v-chip>
         </template>
         
         <template #item.name="{ item }">
-          {{ item.first_name }} {{ item.last_name }}
-        </template>
-        
-        <template #item.active="{ item }">
-          <v-icon :color="item.active ? 'success' : 'error'">
-            {{ item.active ? 'mdi-check-circle' : 'mdi-close-circle' }}
-          </v-icon>
+          {{ item.name }}
         </template>
         
         <template #item.actions="{ item }">
@@ -109,14 +104,6 @@
                   label="Nazwa użytkownika"
                   variant="outlined"
                   required
-                ></v-text-field>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="editedUser.phone"
-                  label="Telefon"
-                  variant="outlined"
                 ></v-text-field>
               </v-col>
               
@@ -190,11 +177,8 @@ export default {
       headers: [
         { title: 'ID', key: 'id', width: '80px' },
         { title: 'Imię i Nazwisko', key: 'name', sortable: true },
-        { title: 'Username', key: 'username', sortable: true },
         { title: 'Email', key: 'email', sortable: true },
         { title: 'Rola', key: 'role', width: '120px' },
-        { title: 'Aktywny', key: 'active', width: '100px' },
-        { title: 'Telefon', key: 'phone' },
         { title: 'Akcje', key: 'actions', width: '120px', sortable: false }
       ]
     }
@@ -204,7 +188,7 @@ export default {
       let users = this.usersStore.allUsers
       
       if (this.roleFilter) {
-        users = users.filter(user => user.role === this.roleFilter)
+        users = users.filter(user => user.role?.code === this.roleFilter)
       }
       
       return users
@@ -223,6 +207,10 @@ export default {
   methods: {
     editUser(user) {
       this.editedUser = { ...user }
+      // Fix role object to code string for v-select
+      if (this.editedUser.role && typeof this.editedUser.role === 'object') {
+        this.editedUser.role = this.editedUser.role.code
+      }
       this.showAddDialog = true
     },
     
@@ -274,7 +262,7 @@ export default {
     getRoleColor(role) {
       switch (role) {
         case 'admin': return 'error'
-        case 'teacher': return 'warning'
+        case 'lecturer': return 'warning'
         case 'student': return 'primary'
         default: return 'secondary'
       }
@@ -283,7 +271,7 @@ export default {
     getRoleLabel(role) {
       switch (role) {
         case 'admin': return 'Administrator'
-        case 'teacher': return 'Wykładowca'
+        case 'lecturer': return 'Wykładowca'
         case 'student': return 'Student'
         default: return role
       }

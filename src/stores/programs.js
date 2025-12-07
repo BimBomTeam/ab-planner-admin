@@ -38,7 +38,30 @@ export const useProgramsStore = defineStore('programs', {
       const authStore = useAuthStore()
       this.loading = true
       try {
-        await axios.post(`${API_URL}/programs`, programData)
+        // 1. Create program
+        const response = await axios.post(`${API_URL}/programs`, { name: programData.name })
+        const newProgram = response.data
+        
+        // 2. Add years if any
+        if (programData.years && programData.years.length > 0) {
+            for (const yearObj of programData.years) {
+                await axios.post(`${API_URL}/program-years`, { 
+                    program_id: newProgram.id, 
+                    year: parseInt(yearObj.year) 
+                })
+            }
+        }
+
+        // 3. Add specializations if any
+        if (programData.specializations && programData.specializations.length > 0) {
+            for (const specObj of programData.specializations) {
+                await axios.post(`${API_URL}/specializations`, { 
+                    program_id: newProgram.id, 
+                    name: specObj.name 
+                })
+            }
+        }
+
         await this.fetchPrograms()
       } catch (error) {
         console.error('Error adding program:', error)
@@ -53,8 +76,16 @@ export const useProgramsStore = defineStore('programs', {
       this.loading = true
       try {
         // API expects { name: "..." }, but UI might pass full object
+        // Ensure we only send the name field, as backend might crash on extra fields
         const payload = { name: programData.name }
+        
+        // Use PUT or PATCH depending on API, but usually PATCH for partial updates
+        // If 500 error persists, check if backend logs show validation error or unexpected field
         await axios.patch(`${API_URL}/programs/${id}`, payload)
+        
+        // Note: Years and Specializations are handled separately via add/delete actions in the UI
+        // We don't update them here in bulk because the API seems to be RESTful resource-based
+        
         await this.fetchPrograms()
       } catch (error) {
         console.error('Error updating program:', error)
