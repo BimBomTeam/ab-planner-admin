@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import router from '@/router'
 
 const API_BASE_URL = '/api/v1'
 
@@ -50,7 +51,7 @@ export const useAuthStore = defineStore('auth', {
         currentUser: (state) => state.user,
         isLoggedIn: (state) => state.isAuthenticated,
         userRole: (state) => state.user?.role?.code || null,
-        
+
         isAdmin: (state) => state.user?.role?.code === 'admin',
         isTeacher: (state) => state.user?.role?.code === 'lecturer',
         isStudent: (state) => state.user?.role?.code === 'student'
@@ -93,6 +94,9 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const codeVerifier = sessionStorage.getItem('pkce_code_verifier')
                 if (!codeVerifier) {
+                    if (this.isAuthenticated) {
+                        return { success: true, user: this.user }
+                    }
                     throw new Error('Brak code verifier - sesja wygasła')
                 }
 
@@ -161,7 +165,7 @@ export const useAuthStore = defineStore('auth', {
                 return true
             } catch (error) {
                 console.error('Token refresh error:', error)
-                this.logout()
+                await this.logout()
                 return false
             }
         },
@@ -189,6 +193,9 @@ export const useAuthStore = defineStore('auth', {
                 localStorage.removeItem('refresh_token')
                 localStorage.removeItem('user') // Ensure it is cleaned up if existed
                 sessionStorage.removeItem('pkce_code_verifier')
+
+                // Force redirect
+                router.push('/login')
             }
         },
 
@@ -253,7 +260,7 @@ axios.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/auth/refresh') && !originalRequest.url.includes('/auth/logout')) {
             originalRequest._retry = true
 
             const authStore = useAuthStore()
@@ -262,6 +269,11 @@ axios.interceptors.response.use(
             if (refreshed) {
                 originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`
                 return axios(originalRequest)
+            } else {
+                // Force redirect if refresh failed
+                router.push('/login')
+                // Return a never-resolving promise to supress error in component usage
+                return new Promise(() => { })
             }
         }
 

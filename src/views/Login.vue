@@ -2,13 +2,15 @@
   <v-container fluid class="fill-height auth-container pa-0">
     <v-row align="center" justify="center" class="fill-height ma-0">
       <v-col cols="12" sm="10" md="6" lg="5" xl="4" class="pa-4">
-        <v-card class="elevation-12 auth-card">
+        <v-card class="elevation-0 auth-card" variant="flat">
           <!-- Header -->
-          <v-card-title class="text-center bg-primary text-white pa-6 pa-sm-8">
+          <v-card-title class="text-center pa-6 pa-sm-8 header-bg">
             <div class="w-100">
-              <v-icon size="48" class="mb-3">mdi-school</v-icon>
-              <h2 class="text-h5 text-sm-h4 font-weight-bold">AB Planner Admin</h2>
-              <p class="text-subtitle-2 text-sm-subtitle-1 mt-2 mb-0">
+              <v-avatar color="white" variant="outlined" size="80" class="mb-4">
+                <v-icon size="40" color="white">mdi-school</v-icon>
+              </v-avatar>
+              <h2 class="text-h5 text-sm-h4 font-weight-bold text-white">AB Planner Admin</h2>
+              <p class="text-subtitle-2 text-sm-subtitle-1 mt-2 mb-0 text-grey-lighten-1">
                 Zaloguj się do panelu administracyjnego
               </p>
             </div>
@@ -16,29 +18,14 @@
 
           <v-card-text class="pa-6 pa-sm-8 pa-md-10">
             <!-- Alert messages -->
-            <v-alert
-              v-if="error"
-              type="error"
-              variant="tonal"
-              class="mb-4"
-              closable
-              @click:close="error = null"
-            >
+            <v-alert v-if="error" type="error" variant="tonal" class="mb-4" closable @click:close="error = null">
               {{ error }}
             </v-alert>
 
             <!-- Microsoft Login Button -->
             <div class="text-center">
-              <v-btn
-                color="primary"
-                size="x-large"
-                block
-                :loading="loading"
-                @click="handleMicrosoftLogin"
-                prepend-icon="mdi-microsoft"
-                class="mb-4 text-none"
-                style="min-height: 56px;"
-              >
+              <v-btn color="white" size="x-large" block :loading="loading" @click="handleMicrosoftLogin"
+                prepend-icon="mdi-microsoft" class="mb-4 text-none" style="min-height: 56px;">
                 <span class="text-body-1 text-sm-h6">Zaloguj się przez Microsoft</span>
               </v-btn>
 
@@ -75,7 +62,7 @@ export default {
 
       try {
         const loginUrl = await this.authStore.getMicrosoftLoginUrl()
-        
+
         // Redirect to Microsoft login
         window.location.href = loginUrl
       } catch (err) {
@@ -89,12 +76,17 @@ export default {
 
 <style scoped>
 .auth-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: radial-gradient(circle at center, #1e1e1e 0%, #121212 100%);
+  background-color: #121212;
+  /* Fallback */
   min-height: 100vh;
 }
 
 .auth-card {
-  border-radius: 16px !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgb(30, 30, 30) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
   overflow: hidden;
   max-width: 100%;
 }
@@ -106,7 +98,7 @@ export default {
 /* Mobile optimizations */
 @media (max-width: 599px) {
   .auth-card {
-    border-radius: 12px !important;
+    border-radius: 20px !important;
   }
 }
 
@@ -117,10 +109,15 @@ export default {
   }
 }
 
+.header-bg {
+  background: linear-gradient(to bottom, #2c3e50, #1a252f);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 /* Desktop */
 @media (min-width: 960px) {
   .auth-card {
-    min-width: 500px;
+    min-width: 480px;
   }
 }
 </style>

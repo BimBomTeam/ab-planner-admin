@@ -1,412 +1,300 @@
 <template>
-  <div>
-    <h1 class="text-h4 mb-6">Dashboard</h1>
-    
-    <!-- Karty statystyk -->
-    <v-row class="mb-6">
-      <v-col cols="6" md="3">
-        <v-card color="primary" dark>
-          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
-            <v-icon class="mr-2 mr-md-3" size="small">mdi-account-group</v-icon>
-            Użytkownicy
-          </v-card-title>
-          <v-card-text class="text-h4 text-md-h3 px-3">
-            {{ usersStore.users.length }}
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="6" md="3">
-        <v-card color="success" dark>
-          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
-            <v-icon class="mr-2 mr-md-3" size="small">mdi-school</v-icon>
-            Programy
-          </v-card-title>
-          <v-card-text class="text-h4 text-md-h3 px-3">
-            {{ programsStore.programs.length }}
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="6" md="3">
-        <v-card color="warning" dark>
-          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
-            <v-icon class="mr-2 mr-md-3" size="small">mdi-account-multiple</v-icon>
-            Grupy
-          </v-card-title>
-          <v-card-text class="text-h4 text-md-h3 px-3">
-            {{ groupsStore.groups.length }}
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <v-col cols="6" md="3">
-        <v-card color="info" dark>
-          <v-card-title class="d-flex align-center text-subtitle-2 text-md-h6 px-3">
-            <v-icon class="mr-2 mr-md-3" size="small">mdi-calendar-clock</v-icon>
-            Dzisiejsze zajęcia
-          </v-card-title>
-          <v-card-text class="text-h4 text-md-h3 px-3">
-            {{ lessonsStore.getLessonsToday.length }}
+  <v-container fluid class="pa-0 pa-md-4">
+    <!-- Welcome Header -->
+    <div class="mb-8">
+      <h1 class="text-h4 font-weight-bold text-primary">
+        Dzień dobry, {{ userFirstName }}!
+      </h1>
+      <p class="text-subtitle-1 text-grey-darken-1 mt-1">
+        {{ currentDatestamp }}
+      </p>
+    </div>
+
+    <!-- Quick Actions Grid -->
+    <h2 class="text-h6 font-weight-bold mb-4">Szybkie akcje</h2>
+    <v-row class="mb-8">
+      <v-col cols="6" sm="6" md="4" lg="2.4" v-for="action in quickActions" :key="action.title">
+        <v-card @click="action.action ? action.action() : $router.push(action.to)" :color="action.color"
+          variant="outlined" class="h-100 cursor-pointer" hover>
+          <v-card-text class="d-flex flex-column align-center justify-center py-6 text-center"
+            style="gap: 12px; height: 140px;">
+            <v-avatar :color="action.color" variant="tonal" size="48">
+              <v-icon :color="action.color" size="24">{{ action.icon }}</v-icon>
+            </v-avatar>
+            <span class="font-weight-bold text-body-2">{{ action.title }}</span>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
-    
-    <!-- Zajęcia -->
+
+    <!-- Widgets Row -->
     <v-row>
-      <v-col cols="12" md="8">
-        <v-card class="elevation-3">
-          <v-card-title class="d-flex flex-wrap justify-space-between align-center bg-primary text-white pa-3">
-            <div class="d-flex align-center mb-2 mb-sm-0">
-              <v-icon class="mr-2" size="24">mdi-calendar-today</v-icon>
-              <span class="text-h6">Zajęcia</span>
+      <!-- Today's Lessons Widget (Full Width) -->
+      <v-col cols="12">
+        <v-card class="h-100 rounded-lg" elevation="2" border>
+          <v-card-title class="d-flex flex-wrap justify-space-between align-center pa-4">
+            <div class="d-flex align-center">
+              <v-icon color="primary" class="mr-2">mdi-calendar-clock</v-icon>
+              <span class="font-weight-bold">Dzisiejsze zajęcia</span>
             </div>
-            
-            <div class="d-flex align-center justify-end flex-grow-1 flex-sm-grow-0">
-              <v-btn
-                icon
-                size="small"
-                variant="text"
-                class="text-white"
-                @click="changeDate(-1)"
-              >
-                <v-icon>mdi-chevron-left</v-icon>
-              </v-btn>
-              
-              <v-menu>
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    variant="text"
-                    class="text-white mx-1 px-2 font-weight-bold"
-                  >
-                    {{ formatDisplayDate(selectedDate) }}
-                    <v-icon size="small" class="ml-1">mdi-chevron-down</v-icon>
-                  </v-btn>
-                </template>
-                
-                <v-date-picker
-                  v-model="selectedDate"
-                  locale="pl"
-                  show-adjacent-months
-                  elevation="8"
-                  color="primary"
-                ></v-date-picker>
-              </v-menu>
-              
-              <v-btn
-                icon
-                size="small"
-                variant="text"
-                class="text-white"
-                @click="changeDate(1)"
-              >
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn>
+
+            <!-- Filters -->
+            <div style="min-width: 200px;" class="mt-2 mt-sm-0">
+              <v-autocomplete v-model="selectedGroupFilter" :items="groupsStore.groups" item-title="code"
+                item-value="id" label="Filtruj wg grupy" variant="outlined" density="compact" hide-details clearable
+                prepend-inner-icon="mdi-filter-variant" placeholder="Wszystkie grupy"
+                class="filter-select"></v-autocomplete>
             </div>
           </v-card-title>
-          
+
+          <v-divider></v-divider>
+
           <v-card-text class="pa-0">
-            <div v-if="getLessonsByDate.length > 0">
-              <v-list class="py-0">
-                <v-list-item
-                  v-for="(lesson, index) in getLessonsByDate"
-                  :key="lesson.id"
-                  class="border-b px-4 py-3"
-                  :class="{ 'bg-grey-lighten-5': index % 2 === 0 }"
-                >
+            <div v-if="filteredLessons.length > 0">
+              <v-list lines="two" class="pa-0">
+                <v-list-item v-for="(lesson, index) in filteredLessons" :key="lesson.id"
+                  :class="{ 'border-b': index !== filteredLessons.length - 1 }" class="py-3 px-4 lesson-item">
                   <template v-slot:prepend>
-                    <v-avatar :color="getStatusColor(lesson.status)" size="32">
-                      <v-icon color="white" size="16">{{ getTypeIcon(lesson.lesson_type) }}</v-icon>
-                    </v-avatar>
+                    <div class="d-flex flex-column align-center mr-4" style="width: 50px;">
+                      <span class="text-h6 font-weight-bold text-primary leading-none">{{
+                        formatTimeOnly(lesson.starts_at) }}</span>
+                      <span class="text-caption text-grey">{{ formatTimeOnly(lesson.ends_at) }}</span>
+                    </div>
                   </template>
 
-                  <div class="flex-grow-1">
-                    <v-list-item-title class="font-weight-bold text-body-1 mb-2">
-                      {{ lesson.subject.name }}
-                    </v-list-item-title>
-                    
-                    <div class="d-flex flex-column" style="gap: 6px;">
-                      <div class="d-flex align-center">
-                        <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
-                        {{ formatTime(lesson.starts_at) }} - {{ formatTime(lesson.ends_at) }}
-                      </div>
-                      <div class="d-flex align-center">
-                        <v-icon size="14" class="mr-1">mdi-account-group</v-icon>
-                        {{ lesson.group.code }}
-                        <v-divider vertical class="mx-2"></v-divider>
-                        <v-icon size="14" class="mr-1">mdi-door</v-icon>
-                        Sala {{ lesson.room.building }}/{{ lesson.room.number }}
-                        <v-divider vertical class="mx-2"></v-divider>
-                        <v-icon size="14" class="mr-1">mdi-account</v-icon>
-                        {{ lesson.lecturer.name }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <template v-slot:append>
-                    <v-chip
-                      :color="getStatusColor(lesson.status)"
-                      size="small"
-                      variant="outlined"
-                      class="text-caption"
-                    >
-                      {{ getStatusLabel(lesson.status) }}
+                  <v-list-item-title class="font-weight-bold mb-1">
+                    {{ lesson.subject.name }}
+                    <v-chip size="x-small" :color="getTypeColor(lesson.lesson_type)" class="ml-2 font-weight-medium"
+                      label>
+                      {{ getTypeName(lesson.lesson_type) }}
                     </v-chip>
-                  </template>
-                </v-list-item>
-              </v-list>
-            </div>
-            
-            <div v-else class="text-center pa-8">
-              <v-icon size="80" color="grey-lighten-2">mdi-calendar-blank-outline</v-icon>
-              <h3 class="text-h6 text-grey mt-4">Brak zajęć</h3>
-              <p class="text-grey">{{ isToday ? 'na dziś' : 'w wybranym dniu' }}</p>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      
-      <!-- Oczekujące powiadomienia -->
-      <v-col cols="12" md="4">
-        <v-card class="elevation-3 h-100">
-          <v-card-title class="d-flex align-center bg-warning text-white pa-4">
-            <v-icon class="mr-3" size="28">mdi-bell-ring</v-icon>
-            <span class="text-h6">Powiadomienia</span>
-          </v-card-title>
-          
-          <v-card-text class="pa-0">
-            <div v-if="notificationsStore.getPendingNotifications.length > 0">
-              <v-list class="py-0">
-                <v-list-item
-                  v-for="(notification, index) in notificationsStore.getPendingNotifications.slice(0, 6)"
-                  :key="notification.id"
-                  class="border-b px-4 py-3"
-                  :class="{ 'bg-grey-lighten-5': index % 2 === 0 }"
-                >
-                  <template v-slot:prepend>
-                    <v-avatar :color="getNotificationColor(notification.payload.type)" size="28">
-                      <v-icon color="white" size="14">{{ getNotificationIcon(notification.payload.type) }}</v-icon>
-                    </v-avatar>
-                  </template>
+                  </v-list-item-title>
 
-                  <div>
-                    <v-list-item-title class="text-body-2 font-weight-medium mb-1">
-                      {{ notification.payload.title }}
-                    </v-list-item-title>
-                    
-                    <v-list-item-subtitle class="text-caption">
-                      {{ notification.payload.message }}
-                    </v-list-item-subtitle>
-                  </div>
-
-                  <template v-slot:append>
-                    <div class="text-caption text-grey">
-                      {{ formatTimeAgo(notification.created_at) }}
+                  <v-list-item-subtitle class="d-flex flex-wrap align-center text-body-2 mt-1">
+                    <div class="d-flex align-center mr-4 mb-1">
+                      <v-icon size="16" class="mr-1 text-grey-darken-1">mdi-account-group</v-icon>
+                      <span class="text-grey-darken-3">{{ lesson.group.code }}</span>
                     </div>
-                  </template>
+                    <div class="d-flex align-center mr-4 mb-1">
+                      <v-icon size="16" class="mr-1 text-grey-darken-1">mdi-door</v-icon>
+                      <span class="text-grey-darken-3">{{ lesson.room.building }}/{{ lesson.room.number }}</span>
+                    </div>
+                    <div class="d-flex align-center mb-1">
+                      <v-icon size="16" class="mr-1 text-grey-darken-1">mdi-account-tie</v-icon>
+                      <span class="text-grey-darken-3">{{ lesson.lecturer.name }}</span>
+                    </div>
+                  </v-list-item-subtitle>
                 </v-list-item>
               </v-list>
-              
-              <v-card-actions v-if="notificationsStore.getPendingNotifications.length > 6" class="justify-center pa-2">
-                <v-btn 
-                  size="small" 
-                  variant="text" 
-                  color="primary"
-                  to="/notifications"
-                >
-                  Zobacz wszystkie ({{ notificationsStore.getPendingNotifications.length }})
-                </v-btn>
-              </v-card-actions>
             </div>
-            
-            <div v-else class="text-center pa-8">
-              <v-icon size="60" color="grey-lighten-2">mdi-bell-check-outline</v-icon>
-              <h4 class="text-subtitle-1 text-grey mt-3">Wszystko odhaczone!</h4>
-              <p class="text-caption text-grey">Brak oczekujących powiadomień</p>
+
+            <!-- Empty State -->
+            <div v-else class="d-flex flex-column align-center justify-center py-10 text-center">
+              <v-avatar color="surface-variant" variant="tonal" size="80" class="mb-4">
+                <v-icon size="40" color="medium-emphasis">mdi-calendar-blank</v-icon>
+              </v-avatar>
+              <h3 class="text-subtitle-1 font-weight-bold text-grey-darken-1">Brak zajęć</h3>
+              <p class="text-caption text-grey">
+                {{ selectedGroupFilter ? 'Dla wybranej grupy' : 'Na dzień dzisiejszy' }}
+              </p>
             </div>
           </v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions class="justify-center pa-2">
+            <v-btn variant="text" color="primary" to="/schedule" class="text-caption font-weight-bold">
+              Zobacz pełny kalendarz <v-icon icon="mdi-arrow-right" size="small" class="ml-1"></v-icon>
+            </v-btn>
+          </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
-  </div>
+
+    <!-- Send Notification Dialog -->
+    <v-dialog v-model="showNotificationDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="pa-6 pb-4 bg-primary text-white">
+          <span class="text-h6">Wyślij powiadomienie do wszystkich</span>
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <v-form @submit.prevent="sendNotification">
+            <v-alert type="info" variant="tonal" class="mb-4" density="compact">
+              Wiadomość zostanie wysłana do wszystkich użytkowników systemu.
+            </v-alert>
+
+            <v-text-field v-model="notifTitle" label="Tytuł" variant="outlined" required></v-text-field>
+
+            <v-textarea v-model="notifMessage" label="Wiadomość" variant="outlined" rows="3" required></v-textarea>
+          </v-form>
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="showNotificationDialog = false">Anuluj</v-btn>
+          <v-btn color="primary" variant="text" @click="sendNotification" :loading="notificationsStore.loading"
+            :disabled="!isNotificationValid">Wyślij</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script>
-import { useUsersStore } from '@/stores/users'
+import { computed, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useProgramsStore } from '@/stores/programs'
-import { useGroupsStore } from '@/stores/groups'
 import { useLessonsStore } from '@/stores/lessons'
+import { useGroupsStore } from '@/stores/groups'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useUsersStore } from '@/stores/users'
+import { useSnackbarStore } from '@/stores/snackbar'
 
 export default {
   name: 'Dashboard',
   setup() {
-    const usersStore = useUsersStore()
-    const programsStore = useProgramsStore()
-    const groupsStore = useGroupsStore()
+    const authStore = useAuthStore()
     const lessonsStore = useLessonsStore()
+    const groupsStore = useGroupsStore()
     const notificationsStore = useNotificationsStore()
-    
-    return {
-      usersStore,
-      programsStore,
-      groupsStore,
-      lessonsStore,
-      notificationsStore,
-      authStore: useAuthStore()
-    }
-  },
-  data() {
-    return {
-      selectedDate: new Date()
-    }
-  },
-  computed: {
-    getLessonsByDate() {
-      const selectedDateStr = this.selectedDate.toDateString()
-      return this.lessonsStore.lessons.filter(lesson => {
-        const lessonDate = new Date(lesson.starts_at).toDateString()
-        return lessonDate === selectedDateStr
-      }).sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
-    },
-    isToday() {
-      const today = new Date().toDateString()
-      const selected = this.selectedDate.toDateString()
-      return today === selected
-    }
-  },
-  methods: {
-    changeDate(direction) {
-      const newDate = new Date(this.selectedDate)
-      newDate.setDate(newDate.getDate() + direction)
-      this.selectedDate = newDate
-    },
-    formatDisplayDate(date) {
-      const today = new Date()
-      const yesterday = new Date(today)
-      yesterday.setDate(today.getDate() - 1)
-      const tomorrow = new Date(today)
-      tomorrow.setDate(today.getDate() + 1)
-      
-      if (date.toDateString() === today.toDateString()) {
-        return 'Dziś'
-      } else if (date.toDateString() === yesterday.toDateString()) {
-        return 'Wczoraj'
-      } else if (date.toDateString() === tomorrow.toDateString()) {
-        return 'Jutro'
-      } else {
-        return date.toLocaleDateString('pl-PL', {
-          day: 'numeric',
-          month: 'short',
-          year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
-        })
-      }
-    },
-    formatTime(dateString) {
-      return new Date(dateString).toLocaleTimeString('pl-PL', {
-        hour: '2-digit',
-        minute: '2-digit'
+    const usersStore = useUsersStore()
+    const snackbar = useSnackbarStore()
+
+    const selectedGroupFilter = ref(null)
+    const showNotificationDialog = ref(false)
+    const notifTitle = ref('')
+    const notifMessage = ref('')
+    const notifTargetUser = ref(null)
+
+    // User Data
+    const userFirstName = computed(() => {
+      if (!authStore.user?.name) return 'Użytkowniku'
+      return authStore.user.name.split(' ')[0]
+    })
+
+    const currentDatestamp = computed(() => {
+      return new Date().toLocaleDateString('pl-PL', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       })
-    },
-    formatTimeAgo(dateString) {
-      const now = new Date()
-      const date = new Date(dateString)
-      const diffInMinutes = Math.floor((now - date) / (1000 * 60))
-      
-      if (diffInMinutes < 60) {
-        return `${diffInMinutes}m temu`
-      } else if (diffInMinutes < 1440) {
-        return `${Math.floor(diffInMinutes / 60)}h temu`
-      } else {
-        return `${Math.floor(diffInMinutes / 1440)}d temu`
+    })
+
+    const isNotificationValid = computed(() => {
+      return !!notifTitle.value && !!notifMessage.value
+    })
+
+    const openNotificationDialog = () => {
+      notifTitle.value = ''
+      notifMessage.value = ''
+      notifTargetUser.value = null
+      showNotificationDialog.value = true
+    }
+
+    // Quick Actions Config
+    const quickActions = [
+      { title: 'Dodaj zajęcia', icon: 'mdi-calendar-plus', color: 'primary', to: '/schedule' },
+      { title: 'Wyślij powiadomienie', icon: 'mdi-send', color: 'deep-purple', action: openNotificationDialog },
+      { title: 'Użytkownicy', icon: 'mdi-account-group', color: 'info', to: '/users' },
+      { title: 'Programy studiów', icon: 'mdi-school', color: 'success', to: '/programs' },
+      { title: 'Grupy dziekańskie', icon: 'mdi-account-multiple-outline', color: 'warning', to: '/groups' },
+      { title: 'Sale dydaktyczne', icon: 'mdi-door-open', color: 'indigo', to: '/rooms' },
+    ]
+
+    // Lessons filtering
+    const filteredLessons = computed(() => {
+      const todayStr = new Date().toDateString()
+
+      let lessons = lessonsStore.lessons.filter(l => {
+        const lDate = new Date(l.starts_at).toDateString()
+        return lDate === todayStr && l.status !== 'cancelled'
+      })
+
+      if (selectedGroupFilter.value) {
+        lessons = lessons.filter(l => l.group.id === selectedGroupFilter.value)
       }
-    },
-    getStatusColor(status) {
-      switch (status) {
-        case 'scheduled': return 'success'
-        case 'rescheduled': return 'warning'
-        case 'cancelled': return 'error'
-        default: return 'grey'
-      }
-    },
-    getStatusLabel(status) {
-      switch (status) {
-        case 'scheduled': return 'Zaplanowane'
-        case 'rescheduled': return 'Przełożone'
-        case 'cancelled': return 'Odwołane'
-        default: return status
-      }
-    },
-    getTypeIcon(type) {
-      switch (type) {
-        case 'lecture': return 'mdi-school'
-        case 'lab': return 'mdi-flask'
-        case 'seminar': return 'mdi-account-group'
-        case 'project': return 'mdi-code-braces'
-        default: return 'mdi-book'
-      }
-    },
-    getNotificationColor(type) {
-      switch (type) {
-        case 'lesson_added': return 'success'
-        case 'lesson_rescheduled': return 'warning'
-        case 'lesson_cancelled': return 'error'
-        case 'lesson_reminder': return 'info'
-        default: return 'primary'
-      }
-    },
-    getNotificationIcon(type) {
-      switch (type) {
-        case 'lesson_added': return 'mdi-plus-circle'
-        case 'lesson_rescheduled': return 'mdi-clock-edit'
-        case 'lesson_cancelled': return 'mdi-cancel'
-        case 'lesson_reminder': return 'mdi-bell'
-        default: return 'mdi-information'
+
+      return lessons.sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
+    })
+
+    const sendNotification = async () => {
+      if (!notifTitle.value || !notifMessage.value) return
+
+      try {
+        await notificationsStore.createNotification({
+          user_id: 0,
+          payload: {
+            title: notifTitle.value,
+            message: notifMessage.value,
+            type: 'manual'
+          },
+          read: false
+        })
+        snackbar.showSuccess('Powiadomienie wysłane do wszystkich!')
+        showNotificationDialog.value = false
+      } catch (error) {
+        console.error(error)
+        snackbar.showError('Błąd wysyłania powiadomienia')
       }
     }
-  },
-  mounted() {
-    if (this.authStore.isAdmin) {
-      this.usersStore.fetchUsers()
+
+    // Helpers
+    const formatTimeOnly = (dateStr) => {
+      return new Date(dateStr).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
     }
-    this.programsStore.fetchPrograms()
-    this.groupsStore.fetchGroups()
-    this.lessonsStore.fetchLessons()
-    this.notificationsStore.fetchNotifications() 
+
+    const getTypeColor = (type) => {
+      switch (type) {
+        case 'lecture': return 'blue-lighten-4 text-blue-darken-4'
+        case 'lab': return 'green-lighten-4 text-green-darken-4'
+        case 'project': return 'orange-lighten-4 text-orange-darken-4'
+        default: return 'grey-lighten-4'
+      }
+    }
+
+    const getTypeName = (type) => {
+      const map = { lecture: 'Wykład', lab: 'Laboratorium', project: 'Projekt', seminar: 'Seminarium' }
+      return map[type] || type
+    }
+
+    onMounted(async () => {
+      await Promise.all([
+        lessonsStore.fetchLessons(),
+        groupsStore.fetchGroups(),
+        usersStore.fetchUsers()
+      ])
+    })
+
+    return {
+      userFirstName,
+      currentDatestamp,
+      quickActions,
+      groupsStore,
+      usersStore,
+      notificationsStore,
+      selectedGroupFilter,
+      filteredLessons,
+      formatTimeOnly,
+      getTypeColor,
+      getTypeName,
+      showNotificationDialog,
+      notifTitle,
+      notifMessage,
+      sendNotification,
+      openNotificationDialog,
+      isNotificationValid
+    }
   }
 }
 </script>
 
 <style scoped>
-.border-b {
-  border-bottom: 1px solid #e0e0e0;
+.leading-none {
+  line-height: 1;
 }
 
-.h-100 {
-  height: 100%;
-}
 
-.v-btn--outlined.text-white {
-  border-color: rgba(255, 255, 255, 0.7) !important;
-}
 
-.v-btn--outlined.text-white:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: white !important;
-}
-
-.v-list-item {
-  min-height: auto !important;
-}
-
-.v-list-item__prepend {
-  margin-right: 16px !important;
-}
-
-.v-list-item__append {
-  margin-left: 16px !important;
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

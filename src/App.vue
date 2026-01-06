@@ -45,26 +45,39 @@
         </v-list>
       </v-menu>
 
-      <v-btn icon="mdi-bell" variant="text"></v-btn>
+
     </v-app-bar>
 
     <v-main :class="{ 'pa-0': !authStore.isAuthenticated }">
       <v-container v-if="authStore.isAuthenticated" fluid>
         <router-view />
       </v-container>
-      <router-view v-else />
+      <router-view v-else-if="!authStore.isAuthenticated && ($route.meta.requiresGuest || $route.meta.skipAuth)" />
     </v-main>
+
+    <!-- Global Snackbar -->
+    <v-snackbar v-model="snackbarStore.show" :color="snackbarStore.color" :timeout="snackbarStore.timeout">
+      {{ snackbarStore.text }}
+
+      <template v-slot:actions>
+        <v-btn color="white" variant="text" @click="snackbarStore.show = false">
+          Zamknij
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
 <script>
 import { useAuthStore } from '@/stores/auth'
+import { useSnackbarStore } from '@/stores/snackbar'
 
 export default {
   name: 'App',
   setup() {
     const authStore = useAuthStore()
-    return { authStore }
+    const snackbarStore = useSnackbarStore()
+    return { authStore, snackbarStore }
   },
   data() {
     return {
@@ -95,19 +108,7 @@ export default {
           value: 'groups'
         },
         {
-          title: 'Zajęcia',
-          icon: 'mdi-calendar-clock',
-          to: '/lessons',
-          value: 'lessons'
-        },
-        {
-          title: 'Powiadomienia',
-          icon: 'mdi-bell',
-          to: '/notifications',
-          value: 'notifications'
-        },
-        {
-          title: 'Plan lekcji',
+          title: 'Plan zajęć',
           icon: 'mdi-calendar-multiselect',
           to: '/schedule',
           value: 'schedule'
@@ -124,12 +125,7 @@ export default {
           to: '/subjects',
           value: 'subjects'
         },
-        {
-          title: 'Wybory studentów',
-          icon: 'mdi-clipboard-check',
-          to: '/student-selections',
-          value: 'student-selections'
-        }
+
       ]
     }
   },

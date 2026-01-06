@@ -4,9 +4,9 @@ import Dashboard from '@/views/Dashboard.vue'
 import Users from '@/views/Users.vue'
 import Programs from '@/views/Programs.vue'
 import Groups from '@/views/Groups.vue'
-import Lessons from '@/views/Lessons.vue'
-import Notifications from '@/views/Notifications.vue'
-import StudentSelections from '@/views/StudentSelections.vue'
+
+
+
 import Login from '@/views/Login.vue'
 import AuthCallback from '@/views/AuthCallback.vue'
 
@@ -51,28 +51,12 @@ const routes = [
     component: Groups,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/lessons',
-    name: 'Lessons',
-    component: Lessons,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/notifications',
-    name: 'Notifications',
-    component: Notifications,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/student-selections',
-    name: 'StudentSelections',
-    component: StudentSelections,
-    meta: { requiresAuth: true }
-  },
+
+
   {
     path: '/schedule',
     name: 'Schedule',
-    component: () => import('@/views/ScheduleView.vue'),
+    component: () => import('@/views/ScheduleUnified.vue'),
     meta: { requiresAuth: true }
   },
   {

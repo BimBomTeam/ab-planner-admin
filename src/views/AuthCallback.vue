@@ -89,12 +89,12 @@ export default {
 
 <style scoped>
 .auth-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: rgb(var(--v-theme-background));
   min-height: 100vh;
 }
 
 .auth-card {
   border-radius: 16px !important;
-  overflow: hidden;
+  background-color: rgb(var(--v-theme-surface)) !important;
 }
 </style>
