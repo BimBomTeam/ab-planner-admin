@@ -221,13 +221,11 @@ export default {
 
       try {
         await notificationsStore.createNotification({
-          user_id: 0,
-          payload: {
-            title: notifTitle.value,
-            message: notifMessage.value,
-            type: 'manual'
-          },
-          read: false
+          title: notifTitle.value,
+          content: notifMessage.value,
+          data: {
+             type: 'manual'
+          }
         })
         snackbar.showSuccess('Powiadomienie wysłane do wszystkich!')
         showNotificationDialog.value = false

@@ -58,7 +58,7 @@ export const useNotificationsStore = defineStore('notifications', {
         const authStore = useAuthStore()
 
         try {
-            const response = await axios.post(`${API_URL}/notifications`, notificationData)
+            const response = await axios.post(`${API_URL}/notifications/broadcast-all`, notificationData)
             this.notifications.push(response.data)
             return response.data
         } catch (error) {
